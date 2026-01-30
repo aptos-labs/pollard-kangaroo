@@ -24,7 +24,6 @@ use std::ops::{Add, Mul};
 /// Baby-step Giant-step algorithm for solving discrete logarithms.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BabyStepGiantStep {
-    pub parameters: BabyStepGiantStepParameters,
     pub table: BabyStepGiantStepTable,
 }
 
@@ -32,8 +31,14 @@ pub struct BabyStepGiantStep {
 #[cfg_attr(feature = "serde", serde_as)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BabyStepGiantStepTable {
+    /// Size of a secret to look for (in bits).
+    pub max_num_bits: u8,
+
+    /// m = ceil(sqrt(2^max_num_bits)), the number of baby steps.
+    pub m: u64,
+
     /// Baby-step lookup table: maps compressed point to its discrete log (j).
-    /// Contains g^j for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^secret_size)).
+    /// Contains g^j for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^max_num_bits)).
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
     pub baby_steps: HashMap<CompressedRistretto, u64>,
 
@@ -41,23 +46,7 @@ pub struct BabyStepGiantStepTable {
     pub giant_step: RistrettoPoint,
 }
 
-/// Defines constants based on which the BSGS algorithm runs.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct BabyStepGiantStepParameters {
-    /// Size of a secret to look for (in bits).
-    pub secret_size: u8,
-    /// m = ceil(sqrt(2^secret_size)), the number of baby steps.
-    pub m: u64,
-}
-
 impl BabyStepGiantStep {
-    pub fn from_parameters(parameters: BabyStepGiantStepParameters) -> Result<BabyStepGiantStep> {
-        let table =
-            BabyStepGiantStepTable::generate(&parameters).context("failed to generate table")?;
-
-        Ok(BabyStepGiantStep { parameters, table })
-    }
-
     #[cfg(feature = "bsgs_table32")]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<BabyStepGiantStep> {
         let bsgs_bytes = match table {
@@ -73,7 +62,7 @@ impl BabyStepGiantStep {
 
     /// Solves the discrete logarithm problem using Baby-step Giant-step.
     ///
-    /// Given pk = g^x, finds x where x is in [0, 2^secret_size).
+    /// Given pk = g^x, finds x where x is in [0, 2^max_num_bits).
     ///
     /// Algorithm:
     /// 1. For i = 0, 1, ..., m-1:
@@ -93,7 +82,7 @@ impl BabyStepGiantStep {
             return Ok(0);
         }
 
-        let m = self.parameters.m;
+        let m = self.table.m;
 
         // gamma starts as pk, then we multiply by g^(-m) each iteration
         let mut gamma = *pk;
@@ -123,7 +112,7 @@ impl BabyStepGiantStep {
         // No solution found in the range [0, m^2)
         Err(anyhow::anyhow!(
             "no solution found in range [0, 2^{})",
-            self.parameters.secret_size
+            self.table.max_num_bits
         ))
     }
 }
@@ -133,12 +122,13 @@ impl BabyStepGiantStepTable {
     ///
     /// Baby step: Compute g^j for j = 0, 1, ..., m-1 and store in a hash table.
     /// Also precompute g^(-m) for the giant step phase.
-    pub fn generate(parameters: &BabyStepGiantStepParameters) -> Result<BabyStepGiantStepTable> {
-        if parameters.secret_size < 1 || parameters.secret_size > 64 {
-            return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
+    pub fn generate(max_num_bits: u8) -> Result<BabyStepGiantStepTable> {
+        if max_num_bits < 1 || max_num_bits > 64 {
+            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
         }
 
-        let m = parameters.m;
+        // m = ceil(sqrt(2^max_num_bits)) = 2^(ceil(max_num_bits/2))
+        let m: u64 = 1 << ((max_num_bits + 1) / 2);
 
         // Baby steps: compute g^0, g^1, ..., g^(m-1)
         let mut baby_steps = HashMap::with_capacity(m as usize);
@@ -161,6 +151,8 @@ impl BabyStepGiantStepTable {
         let giant_step = g.mul(neg_m);
 
         Ok(BabyStepGiantStepTable {
+            max_num_bits,
+            m,
             baby_steps,
             giant_step,
         })
@@ -169,18 +161,9 @@ impl BabyStepGiantStepTable {
 
 impl crate::DlogSolver for BabyStepGiantStep {
     fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
-        if max_num_bits < 1 || max_num_bits > 32 {
-            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 32"));
-        }
-
-        // m = ceil(sqrt(2^max_num_bits)) = 2^(ceil(max_num_bits/2))
-        let m: u64 = 1 << ((max_num_bits + 1) / 2);
-
-        let parameters = BabyStepGiantStepParameters {
-            secret_size: max_num_bits,
-            m,
-        };
-        Self::from_parameters(parameters)
+        let table =
+            BabyStepGiantStepTable::generate(max_num_bits).context("failed to generate table")?;
+        Ok(BabyStepGiantStep { table })
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
@@ -188,6 +171,6 @@ impl crate::DlogSolver for BabyStepGiantStep {
     }
 
     fn max_num_bits(&self) -> u8 {
-        self.parameters.secret_size
+        self.table.max_num_bits
     }
 }

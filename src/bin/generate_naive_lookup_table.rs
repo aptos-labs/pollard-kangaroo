@@ -5,7 +5,8 @@
 //! Example: cargo run --bin generate_naive_lookup_table --features serde -- 16
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::naive_lookup::{NaiveLookup, NaiveLookupParameters};
+use pollard_kangaroo::naive_lookup::NaiveLookup;
+use pollard_kangaroo::DlogSolver;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -32,17 +33,15 @@ fn main() -> Result<()> {
     println!("Table will contain {} entries", table_size);
     println!("This will take some time...");
 
-    let parameters = NaiveLookupParameters { max_num_bits: bits };
-
     let start = std::time::Instant::now();
-    let naive = NaiveLookup::from_parameters(parameters)
+    let naive = NaiveLookup::new_and_compute_table(bits)
         .context("failed to generate naive lookup table")?;
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());
 
     // Serialize and save
-    let output_path = format!("tables/naive_lookup_{}.bin", bits);
+    let output_path = format!("src/naive_lookup/rsc/table_{}", bits);
     let output_path = Path::new(&output_path);
 
     // Create parent directories if they don't exist

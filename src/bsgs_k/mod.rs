@@ -28,8 +28,14 @@ use std::ops::{Add, Mul};
 #[cfg_attr(feature = "serde", serde_as)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BabyStepGiantStepKTable {
+    /// Size of a secret to look for (in bits).
+    pub max_num_bits: u8,
+
+    /// m = ceil(sqrt(2^max_num_bits)), the number of baby steps.
+    pub m: u64,
+
     /// Baby-step lookup table: maps compressed DOUBLED point to its discrete log (j).
-    /// Contains compress(2*g^j) for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^secret_size)).
+    /// Contains compress(2*g^j) for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^max_num_bits)).
     ///
     /// We store doubled points so we can use `double_and_compress_batch` during solving.
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
@@ -39,34 +45,16 @@ pub struct BabyStepGiantStepKTable {
     pub giant_step: RistrettoPoint,
 }
 
-/// Defines constants based on which the BSGS-k algorithm runs.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct BabyStepGiantStepKParameters {
-    /// Size of a secret to look for (in bits).
-    pub secret_size: u8,
-    /// m = ceil(sqrt(2^secret_size)), the number of baby steps.
-    pub m: u64,
-}
-
 /// BSGS-k algorithm for solving discrete logarithms with compile-time batch size K.
 ///
 /// Uses `double_and_compress_batch` to amortize compression cost across
 /// K iterations.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BabyStepGiantStepK<const K: usize> {
-    pub parameters: BabyStepGiantStepKParameters,
     pub table: BabyStepGiantStepKTable,
 }
 
 impl<const K: usize> BabyStepGiantStepK<K> {
-    /// Creates a new BSGS-k solver with the given parameters.
-    pub fn from_parameters(parameters: BabyStepGiantStepKParameters) -> Result<Self> {
-        let table =
-            BabyStepGiantStepKTable::generate(&parameters).context("failed to generate table")?;
-
-        Ok(Self { parameters, table })
-    }
-
     #[cfg(feature = "bsgs_k_table32")]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Self> {
         let bsgs_bytes = match table {
@@ -81,7 +69,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
 
     /// Solves the discrete logarithm problem using BSGS-k.
     ///
-    /// Given pk = g^x, finds x where x is in [0, 2^secret_size).
+    /// Given pk = g^x, finds x where x is in [0, 2^max_num_bits).
     ///
     /// The const generic parameter `K` controls the batch size: we accumulate K points
     /// before calling `double_and_compress_batch`. Larger K amortizes the compression
@@ -108,7 +96,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
             return Ok(0);
         }
 
-        let m = self.parameters.m;
+        let m = self.table.m;
 
         // gamma starts as pk, then we multiply by g^(-m) each iteration
         let mut gamma = *pk;
@@ -157,7 +145,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
         // No solution found in the range [0, m^2)
         Err(anyhow::anyhow!(
             "no solution found in range [0, 2^{})",
-            self.parameters.secret_size
+            self.table.max_num_bits
         ))
     }
 }
@@ -168,12 +156,13 @@ impl BabyStepGiantStepKTable {
     /// Baby step: Compute 2*g^j for j = 0, 1, ..., m-1 and store compressed in a hash table.
     /// We store doubled points so we can use `double_and_compress_batch` during solving.
     /// Also precompute g^(-m) for the giant step phase.
-    pub fn generate(parameters: &BabyStepGiantStepKParameters) -> Result<BabyStepGiantStepKTable> {
-        if parameters.secret_size < 1 || parameters.secret_size > 64 {
-            return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
+    pub fn generate(max_num_bits: u8) -> Result<BabyStepGiantStepKTable> {
+        if max_num_bits < 1 || max_num_bits > 64 {
+            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
         }
 
-        let m = parameters.m;
+        // m = ceil(sqrt(2^max_num_bits)) = 2^(ceil(max_num_bits/2))
+        let m: u64 = 1 << ((max_num_bits + 1) / 2);
         let g = RISTRETTO_BASEPOINT_POINT;
 
         // Baby steps: compute g^0, g^1, g^2, ..., g^(m-1)
@@ -201,6 +190,8 @@ impl BabyStepGiantStepKTable {
         let giant_step = g.mul(neg_m);
 
         Ok(BabyStepGiantStepKTable {
+            max_num_bits,
+            m,
             baby_steps,
             giant_step,
         })
@@ -209,18 +200,9 @@ impl BabyStepGiantStepKTable {
 
 impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
     fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
-        if max_num_bits < 1 || max_num_bits > 64 {
-            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
-        }
-
-        // m = ceil(sqrt(2^max_num_bits)) = 2^(ceil(max_num_bits/2))
-        let m: u64 = 1 << ((max_num_bits + 1) / 2);
-
-        let parameters = BabyStepGiantStepKParameters {
-            secret_size: max_num_bits,
-            m,
-        };
-        Self::from_parameters(parameters)
+        let table =
+            BabyStepGiantStepKTable::generate(max_num_bits).context("failed to generate table")?;
+        Ok(Self { table })
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
@@ -228,7 +210,7 @@ impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
     }
 
     fn max_num_bits(&self) -> u8 {
-        self.parameters.secret_size
+        self.table.max_num_bits
     }
 }
 

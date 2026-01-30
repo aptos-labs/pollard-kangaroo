@@ -27,16 +27,7 @@ use std::collections::HashMap;
 /// Naive lookup-based solver for discrete logarithms.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NaiveLookup {
-    pub parameters: NaiveLookupParameters,
     pub table: NaiveLookupTable,
-}
-
-/// Parameters for the naive lookup algorithm.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct NaiveLookupParameters {
-    /// Maximum number of bits for secrets (ℓ).
-    /// The solver can find discrete logs for values in [0, 2^max_num_bits).
-    pub max_num_bits: u8,
 }
 
 /// Lookup table for the naive algorithm.
@@ -45,6 +36,10 @@ pub struct NaiveLookupParameters {
 #[cfg_attr(feature = "serde", serde_as)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct NaiveLookupTable {
+    /// Maximum number of bits for secrets (ℓ).
+    /// The solver can find discrete logs for values in [0, 2^max_num_bits).
+    pub max_num_bits: u8,
+
     /// Lookup table: maps compressed point (iG) to its discrete log (i).
     /// Contains entries for i = 0, 1, ..., 2^max_num_bits - 1.
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
@@ -52,13 +47,6 @@ pub struct NaiveLookupTable {
 }
 
 impl NaiveLookup {
-    /// Creates a new solver from parameters.
-    pub fn from_parameters(parameters: NaiveLookupParameters) -> Result<NaiveLookup> {
-        let table = NaiveLookupTable::generate(&parameters).context("failed to generate table")?;
-
-        Ok(NaiveLookup { parameters, table })
-    }
-
     /// Creates a solver from a precomputed table.
     #[cfg(feature = "naive_lookup_table16")]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<NaiveLookup> {
@@ -95,7 +83,7 @@ impl NaiveLookup {
             .ok_or_else(|| {
                 anyhow::anyhow!(
                     "no solution found in range [0, 2^{})",
-                    self.parameters.max_num_bits
+                    self.table.max_num_bits
                 )
             })
     }
@@ -105,12 +93,12 @@ impl NaiveLookupTable {
     /// Generates the lookup table.
     ///
     /// Computes iG for i = 0, 1, ..., 2^max_num_bits - 1 and stores (compressed(iG) -> i).
-    pub fn generate(parameters: &NaiveLookupParameters) -> Result<NaiveLookupTable> {
-        if parameters.max_num_bits < 1 || parameters.max_num_bits > 32 {
+    pub fn generate(max_num_bits: u8) -> Result<NaiveLookupTable> {
+        if max_num_bits < 1 || max_num_bits > 32 {
             return Err(anyhow::anyhow!("max_num_bits must be between 1 and 32"));
         }
 
-        let n: u64 = 1 << parameters.max_num_bits;
+        let n: u64 = 1 << max_num_bits;
 
         let mut lookup = HashMap::with_capacity(n as usize);
         let mut current = RistrettoPoint::identity();
@@ -125,18 +113,17 @@ impl NaiveLookupTable {
             lookup.insert(current.compress(), i);
         }
 
-        Ok(NaiveLookupTable { lookup })
+        Ok(NaiveLookupTable {
+            max_num_bits,
+            lookup,
+        })
     }
 }
 
 impl crate::DlogSolver for NaiveLookup {
     fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
-        if max_num_bits < 1 || max_num_bits > 32 {
-            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 32"));
-        }
-
-        let parameters = NaiveLookupParameters { max_num_bits };
-        Self::from_parameters(parameters)
+        let table = NaiveLookupTable::generate(max_num_bits).context("failed to generate table")?;
+        Ok(NaiveLookup { table })
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
@@ -144,7 +131,7 @@ impl crate::DlogSolver for NaiveLookup {
     }
 
     fn max_num_bits(&self) -> u8 {
-        self.parameters.max_num_bits
+        self.table.max_num_bits
     }
 }
 

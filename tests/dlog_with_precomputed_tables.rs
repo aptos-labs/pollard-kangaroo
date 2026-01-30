@@ -46,22 +46,6 @@ mod dlog_with_precomputed_tables {
     }
 
     #[test]
-    #[ignore]
-    fn bl12_solves_48_bit() {
-        let mut rng = create_seeded_rng("bl12_solves_48_bit");
-        let bl12_48 = Bl12::from_precomputed_table(Bl12Tables::Bl12_48).unwrap();
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(48, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // Use the seeded RNG for the solver as well (BL12 is randomized)
-        assert_eq!(
-            bl12_48.solve_dlp_with_rng(&pk, None, &mut rng).unwrap(),
-            sk_u64
-        );
-    }
-
-    #[test]
     fn bsgs_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_solves_32_bit");
         let bsgs32 =

@@ -10,4 +10,4 @@ pub enum PrecomputedTables {
 
 /// Precomputed table bytes for 16-bit secrets.
 #[cfg(feature = "naive_lookup_table16")]
-pub const NAIVE_LOOKUP_16: &[u8] = include_bytes!("../../tables/naive_lookup_16.bin");
+pub const NAIVE_LOOKUP_16: &[u8] = include_bytes!("rsc/table_16");

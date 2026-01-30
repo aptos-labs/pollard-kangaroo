@@ -5,7 +5,8 @@
 //! Example: cargo run --bin generate_bsgs_table --features serde -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::bsgs::{BabyStepGiantStep, BabyStepGiantStepParameters};
+use pollard_kangaroo::bsgs::BabyStepGiantStep;
+use pollard_kangaroo::DlogSolver;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -26,21 +27,16 @@ fn main() -> Result<()> {
         anyhow::bail!("bits must be between 8 and 64");
     }
 
-    // m = ceil(sqrt(2^bits)) = 2^(bits/2)
-    let m: u64 = 1 << (bits / 2);
+    // m = ceil(sqrt(2^bits)) = 2^(ceil(bits/2))
+    let m: u64 = 1 << ((bits + 1) / 2);
 
     println!("Generating BSGS table for {}-bit secrets...", bits);
     println!("Table size m = {} (baby steps)", m);
     println!("This will take some time...");
 
-    let parameters = BabyStepGiantStepParameters {
-        secret_size: bits,
-        m,
-    };
-
     let start = std::time::Instant::now();
     let bsgs =
-        BabyStepGiantStep::from_parameters(parameters).context("failed to generate BSGS table")?;
+        BabyStepGiantStep::new_and_compute_table(bits).context("failed to generate BSGS table")?;
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());

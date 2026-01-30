@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["bl12", "bsgs", "bsgs_k", "naive_lookup", "bl12_table32", "bl12_table48", "bsgs_table32", "bsgs_k_table32", "naive_lookup_table16"]
+default = ["bl12", "bsgs", "bsgs_k", "naive_lookup", "bl12_table32", "bsgs_table32", "bsgs_k_table32", "naive_lookup_table16"]
 serde = ["dep:serde", "dep:serde_with"]
 precomputed_tables = ["serde", "dep:bincode"]
 # Algorithm features - can be disabled to reduce WASM size
@@ -14,7 +14,6 @@ bsgs_k = []
 naive_lookup = []
 # Precomputed table features (each enables its algorithm + precomputed_tables)
 bl12_table32 = ["bl12", "precomputed_tables"]
-bl12_table48 = ["bl12", "precomputed_tables"]
 bsgs_table32 = ["bsgs", "precomputed_tables"]
 bsgs_k_table32 = ["bsgs_k", "precomputed_tables"]
 naive_lookup_table16 = ["naive_lookup", "precomputed_tables"]
@@ -31,6 +30,10 @@ web-time = { version = "1.1" }
 [dev-dependencies]
 criterion = "0.5"
 rand_chacha = "0.3"
+
+[[bin]]
+name = "generate_bl12_table"
+required-features = ["bl12", "serde"]
 
 [[bin]]
 name = "generate_bsgs_table"

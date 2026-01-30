@@ -27,18 +27,6 @@ fn bench_bl12_32bit(c: &mut Criterion) {
     });
 }
 
-fn bench_bl12_48bit(c: &mut Criterion) {
-    let bl12 = Bl12::from_precomputed_table(Bl12Tables::Bl12_48).unwrap();
-
-    c.bench_function("[BL12] 48-bit secrets", |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(48).unwrap(),
-            |(_sk, pk)| bl12.solve_dlp(&pk, None),
-            BatchSize::SmallInput,
-        )
-    });
-}
-
 // =============================================================================
 // BSGS benchmarks
 // =============================================================================
@@ -127,12 +115,6 @@ criterion_group! {
 }
 
 criterion_group! {
-    name = bl12_48bit_group;
-    config = Criterion::default().sample_size(10);
-    targets = bench_bl12_48bit
-}
-
-criterion_group! {
     name = bsgs_32bit_group;
     config = Criterion::default().sample_size(10);
     targets = bench_bsgs_32bit
@@ -158,7 +140,6 @@ criterion_group! {
 
 criterion_main!(
     bl12_32bit_group,
-    bl12_48bit_group,
     bsgs_32bit_group,
     bsgs_k_32bit_group,
     bsgs_k_18bit_group,
