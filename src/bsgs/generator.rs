@@ -13,8 +13,8 @@ impl BsgsTable {
     /// Baby step: Compute g^j for j = 0, 1, ..., m-1 and store in a hash table.
     /// Also precompute g^(-m) for the giant step phase.
     pub fn generate(parameters: &BsgsParameters) -> Result<BsgsTable> {
-        if parameters.secret_size < 8 || parameters.secret_size > 64 {
-            return Err(anyhow::anyhow!("secret size must be between 8 and 64"));
+        if parameters.secret_size < 1 || parameters.secret_size > 64 {
+            return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
         }
 
         let m = parameters.m;

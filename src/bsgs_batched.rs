@@ -80,3 +80,62 @@ impl BabyGiantBatched {
         Ok(bsgs)
     }
 }
+
+/// Batched Baby-step Giant-step algorithm with compile-time batch size K.
+///
+/// This wrapper around `BabyGiantBatched` uses a const generic K parameter
+/// for the batch size, allowing the batch size to be specified at compile time.
+pub struct BabyGiantBatchedK<const K: usize> {
+    inner: BabyGiantBatched,
+}
+
+impl<const K: usize> BabyGiantBatchedK<K> {
+    /// Creates a new batched BSGS solver with the given parameters.
+    pub fn from_parameters(parameters: BsgsBatchedParameters) -> Result<Self> {
+        Ok(Self {
+            inner: BabyGiantBatched::from_parameters(parameters)?,
+        })
+    }
+
+    #[cfg(feature = "bsgs_batched_presets")]
+    pub fn from_preset(preset: BsgsBatchedPresets) -> Result<Self> {
+        Ok(Self {
+            inner: BabyGiantBatched::from_preset(preset)?,
+        })
+    }
+
+    /// Solves the discrete logarithm problem using batch size K.
+    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<Option<u64>> {
+        self.inner.solve_dlp(pk, K, max_time)
+    }
+
+    /// Returns a reference to the inner BabyGiantBatched.
+    pub fn inner(&self) -> &BabyGiantBatched {
+        &self.inner
+    }
+}
+
+impl<const K: usize> crate::DlogSolver for BabyGiantBatchedK<K> {
+    fn new(secret_bits: u8) -> Result<Self> {
+        if secret_bits < 1 || secret_bits > 64 {
+            return Err(anyhow::anyhow!("secret_bits must be between 1 and 64"));
+        }
+
+        // m = ceil(sqrt(2^secret_bits)) = 2^(ceil(secret_bits/2))
+        let m: u64 = 1 << ((secret_bits + 1) / 2);
+
+        let parameters = BsgsBatchedParameters {
+            secret_size: secret_bits,
+            m,
+        };
+        Self::from_parameters(parameters)
+    }
+
+    fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>> {
+        self.solve_dlp(pk, None)
+    }
+
+    fn secret_bits(&self) -> u8 {
+        self.inner.parameters.secret_size
+    }
+}

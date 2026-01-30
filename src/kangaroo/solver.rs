@@ -17,7 +17,9 @@ impl Kangaroo {
 
         loop {
             // wdist = r + slog_1 + slog_2 ...
-            let mut wdist = utils::generate_random_scalar(self.parameters.secret_size - 8)
+            // For small secret sizes, use 0 or a small value
+            let wdist_bits = self.parameters.secret_size.saturating_sub(8).max(1);
+            let mut wdist = utils::generate_random_scalar(wdist_bits)
                 .context("failed to generate `wdist` scalar")?;
             // w = sk * G + r * G + slog_1 * G + slog_2 * G ... = sk * G + wdist * G
             let mut w = pk.add(RISTRETTO_BASEPOINT_POINT.mul(wdist));

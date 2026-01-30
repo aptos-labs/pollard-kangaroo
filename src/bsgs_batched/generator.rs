@@ -14,8 +14,8 @@ impl BsgsBatchedTable {
     /// We store doubled points so we can use `double_and_compress_batch` during solving.
     /// Also precompute g^(-m) for the giant step phase.
     pub fn generate(parameters: &BsgsBatchedParameters) -> Result<BsgsBatchedTable> {
-        if parameters.secret_size < 8 || parameters.secret_size > 64 {
-            return Err(anyhow::anyhow!("secret size must be between 8 and 64"));
+        if parameters.secret_size < 1 || parameters.secret_size > 64 {
+            return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
         }
 
         let m = parameters.m;

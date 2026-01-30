@@ -10,8 +10,8 @@ use std::ops::{AddAssign, Mul};
 
 impl Table {
     pub fn generate(parameters: &Parameters) -> Result<Table> {
-        if parameters.secret_size < 8 || parameters.secret_size > 64 {
-            return Err(anyhow::anyhow!("secret size must be between 8 and 64"));
+        if parameters.secret_size < 1 || parameters.secret_size > 64 {
+            return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
         }
 
         let (slog, s) = Self::s_values_init(parameters)?;
@@ -43,7 +43,17 @@ impl Table {
     }
 
     fn s_values_init(parameters: &Parameters) -> Result<(Vec<Scalar>, Vec<RistrettoPoint>)> {
-        let slog_size = ((1 << (parameters.secret_size as u64 - 2)) / parameters.W).ilog2() as u8;
+        // Calculate slog_size, handling small secret_size values
+        // For very small secret_size, we clamp to at least 1 bit
+        let search_space = 1u64 << parameters.secret_size.min(62);
+        let ratio = search_space
+            .saturating_div(4)
+            .saturating_div(parameters.W.max(1));
+        let slog_size = if ratio > 0 {
+            ratio.ilog2().max(1) as u8
+        } else {
+            1
+        };
 
         let mut scalars = Vec::with_capacity(parameters.R as usize);
         let mut points = Vec::with_capacity(parameters.R as usize);

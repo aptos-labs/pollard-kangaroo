@@ -37,6 +37,7 @@ pub struct BsgsTable {
     pub giant_step: RistrettoPoint,
 
     /// The scalar -m (mod group order).
+    /// TODO: is this even used? if not, remove it. (same for the batched BSGS algorithm)
     pub neg_m: Scalar,
 }
 
@@ -67,5 +68,30 @@ impl BabyGiant {
             bincode::deserialize(bsgs_bytes).context("failed to deserialize table")?;
 
         Ok(bsgs)
+    }
+}
+
+impl crate::DlogSolver for BabyGiant {
+    fn new(secret_bits: u8) -> Result<Self> {
+        if secret_bits < 1 || secret_bits > 32 {
+            return Err(anyhow::anyhow!("secret_bits must be between 1 and 32"));
+        }
+
+        // m = ceil(sqrt(2^secret_bits)) = 2^(ceil(secret_bits/2))
+        let m: u64 = 1 << ((secret_bits + 1) / 2);
+
+        let parameters = BsgsParameters {
+            secret_size: secret_bits,
+            m,
+        };
+        Self::from_parameters(parameters)
+    }
+
+    fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>> {
+        self.solve_dlp(pk, None)
+    }
+
+    fn secret_bits(&self) -> u8 {
+        self.parameters.secret_size
     }
 }
