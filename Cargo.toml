@@ -4,13 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["bl12", "bsgs", "bsgs_k", "bl12_table32", "bl12_table48", "bsgs_table32", "bsgs_k_table32"]
+default = ["bl12", "bsgs", "bsgs_k", "naive_lookup", "bl12_table32", "bl12_table48", "bsgs_table32", "bsgs_k_table32", "naive_lookup_table16"]
 serde = ["dep:serde", "dep:serde_with"]
 precomputed_tables = ["serde", "dep:bincode"]
 # Algorithm features - can be disabled to reduce WASM size
 bl12 = []
 bsgs = []
 bsgs_k = []
+naive_lookup = []
 # [BL12] precomputed table features
 bl12_precomputed_tables = ["bl12", "precomputed_tables"]
 bl12_table32 = ["bl12_precomputed_tables"]
@@ -21,6 +22,9 @@ bsgs_table32 = ["bsgs_precomputed_tables"]
 # BSGS-k precomputed table features
 bsgs_k_precomputed_tables = ["bsgs_k", "serde", "dep:bincode"]
 bsgs_k_table32 = ["bsgs_k_precomputed_tables"]
+# Naive lookup precomputed table features
+naive_lookup_precomputed_tables = ["naive_lookup", "precomputed_tables"]
+naive_lookup_table16 = ["naive_lookup_precomputed_tables"]
 
 [dependencies]
 curve25519-dalek = { version = "4", features = ["serde", "rand_core"] }
@@ -34,6 +38,18 @@ web-time = { version = "1.1" }
 [dev-dependencies]
 criterion = "0.5"
 rand_chacha = "0.3"
+
+[[bin]]
+name = "generate_bsgs_table"
+required-features = ["bsgs", "serde"]
+
+[[bin]]
+name = "generate_bsgs_k_table"
+required-features = ["bsgs_k", "serde"]
+
+[[bin]]
+name = "generate_naive_lookup_table"
+required-features = ["naive_lookup", "serde"]
 
 [[bench]]
 name = "dlp_algorithms"
