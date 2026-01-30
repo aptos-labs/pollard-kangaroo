@@ -64,7 +64,7 @@ fn bench_bsgs_k<const K: usize>(c: &mut Criterion, secret_bits: u8, label_suffix
     let bsgs =
         BabyStepGiantStepK::<K>::from_precomputed_table(BsgsKTables::BabyStepGiantStep32).unwrap();
 
-    c.bench_function(&format!("[BSGS-k] K={}, {}", K, label_suffix), |b| {
+    c.bench_function(&format!("[BSGS-k{}], {}", K, label_suffix), |b| {
         b.iter_batched(
             || utils::generate_dlog_instance(secret_bits).unwrap(),
             |(_sk, pk)| bsgs.solve_dlp(&pk, None),
@@ -122,7 +122,7 @@ fn bench_naive_lookup_16bit(c: &mut Criterion) {
 
 criterion_group! {
     name = bl12_32bit_group;
-    config = Criterion::default().sample_size(100);
+    config = Criterion::default().sample_size(50);
     targets = bench_bl12_32bit
 }
 
@@ -134,13 +134,13 @@ criterion_group! {
 
 criterion_group! {
     name = bsgs_32bit_group;
-    config = Criterion::default().sample_size(50);
+    config = Criterion::default().sample_size(10);
     targets = bench_bsgs_32bit
 }
 
 criterion_group! {
     name = bsgs_k_32bit_group;
-    config = Criterion::default().sample_size(50);
+    config = Criterion::default().sample_size(10);
     targets = bench_bsgs_k_32bit
 }
 
