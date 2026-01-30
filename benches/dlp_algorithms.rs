@@ -1,6 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
-use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek::scalar::Scalar;
+//! Benchmarks for discrete log algorithms.
+
+use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use pollard_kangaroo::bl12::precomputed_tables::PrecomputedTables as Bl12Tables;
 use pollard_kangaroo::bl12::Bl12;
 use pollard_kangaroo::bsgs::precomputed_tables::PrecomputedTables as BsgsTables;
@@ -8,7 +8,6 @@ use pollard_kangaroo::bsgs::BabyStepGiantStep;
 use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
 use pollard_kangaroo::utils;
-use rand_core::OsRng;
 
 fn bench_bl12_32(c: &mut Criterion) {
     let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::Bl12_32).unwrap();
@@ -31,23 +30,6 @@ fn bench_bl12_48(c: &mut Criterion) {
             |(_sk, pk)| bl12_48.solve_dlp(&pk, None),
             BatchSize::SmallInput,
         )
-    });
-}
-
-fn bench_point_addition(c: &mut Criterion) {
-    let p1 = RISTRETTO_BASEPOINT_POINT * Scalar::random(&mut OsRng);
-    let p2 = RISTRETTO_BASEPOINT_POINT * Scalar::random(&mut OsRng);
-
-    c.bench_function("ristretto255 point addition", |b| {
-        b.iter(|| black_box(p1) + black_box(p2))
-    });
-}
-
-fn bench_point_compression(c: &mut Criterion) {
-    let p = RISTRETTO_BASEPOINT_POINT * Scalar::random(&mut OsRng);
-
-    c.bench_function("ristretto255 point compression", |b| {
-        b.iter(|| black_box(p).compress())
     });
 }
 
@@ -136,11 +118,6 @@ criterion_group! {
     config = Criterion::default().sample_size(10);
     targets = bench_bl12_48
 }
-criterion_group!(
-    point_ops_group,
-    bench_point_addition,
-    bench_point_compression
-);
 criterion_group! {
     name = bsgs_32bit_group;
     config = Criterion::default().sample_size(50);
@@ -177,7 +154,6 @@ criterion_group! {
 }
 
 criterion_main!(
-    point_ops_group,
     bl12_32bit_group,
     bl12_48bit_group,
     bsgs_32bit_group,

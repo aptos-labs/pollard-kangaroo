@@ -38,3 +38,7 @@ rand_chacha = "0.3"
 [[bench]]
 name = "dlp_algorithms"
 harness = false
+
+[[bench]]
+name = "ec_operations"
+harness = false
