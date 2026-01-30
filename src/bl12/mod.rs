@@ -1,11 +1,11 @@
 #![allow(non_snake_case)]
 
 pub mod generator;
-#[cfg(feature = "presets")]
+#[cfg(feature = "bl12_presets")]
 pub mod presets;
 pub mod solver;
 
-#[cfg(feature = "presets")]
+#[cfg(feature = "bl12_presets")]
 use crate::bl12::presets::Presets;
 
 use anyhow::{Context, Result};
@@ -78,14 +78,14 @@ impl Bl12 {
         Ok(Bl12 { parameters, table })
     }
 
-    #[cfg(feature = "presets")]
+    #[cfg(feature = "bl12_presets")]
     pub fn from_preset(preset: Presets) -> Result<Bl12> {
         let bl12_bytes = match preset {
-            #[cfg(feature = "table16")]
+            #[cfg(feature = "bl12_table16")]
             Presets::Bl12_16 => presets::BL12_16,
-            #[cfg(feature = "table32")]
+            #[cfg(feature = "bl12_table32")]
             Presets::Bl12_32 => presets::BL12_32,
-            #[cfg(feature = "table48")]
+            #[cfg(feature = "bl12_table48")]
             Presets::Bl12_48 => presets::BL12_48,
         };
 

@@ -84,17 +84,14 @@ macro_rules! generate_dlog_tests {
 generate_dlog_tests!(pollard_kangaroo::bsgs::BabyGiant, bsgs_tests);
 
 // Generate tests for BSGS-k with K=64
-#[cfg(feature = "bsgs_batched")]
-generate_dlog_tests!(
-    pollard_kangaroo::bsgs_batched::BabyGiantBatchedK<64>,
-    bsgs_batched_k64_tests
-);
+#[cfg(feature = "bsgs_k")]
+generate_dlog_tests!(pollard_kangaroo::bsgs_k::BabyGiantKK<64>, bsgs_k_k64_tests);
 
 // Generate tests for BSGS-k with K=256
-#[cfg(feature = "bsgs_batched")]
+#[cfg(feature = "bsgs_k")]
 generate_dlog_tests!(
-    pollard_kangaroo::bsgs_batched::BabyGiantBatchedK<256>,
-    bsgs_batched_k256_tests
+    pollard_kangaroo::bsgs_k::BabyGiantKK<256>,
+    bsgs_k_k256_tests
 );
 
 // Generate tests for [BL12]

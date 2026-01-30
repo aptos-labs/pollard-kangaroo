@@ -5,8 +5,8 @@ use pollard_kangaroo::bl12::presets::Presets;
 use pollard_kangaroo::bl12::Bl12;
 use pollard_kangaroo::bsgs::presets::BsgsPresets;
 use pollard_kangaroo::bsgs::BabyGiant;
-use pollard_kangaroo::bsgs_batched::presets::BsgsBatchedPresets;
-use pollard_kangaroo::bsgs_batched::BabyGiantBatched;
+use pollard_kangaroo::bsgs_k::presets::BsgsKPresets;
+use pollard_kangaroo::bsgs_k::BabyGiantK;
 use pollard_kangaroo::utils;
 use rand_core::OsRng;
 
@@ -75,8 +75,8 @@ fn bench_bsgs32(c: &mut Criterion) {
     });
 }
 
-fn bench_bsgs_batched32(c: &mut Criterion) {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+fn bench_bsgs_k_32(c: &mut Criterion) {
+    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
 
     // k values: 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384
     let k_values: Vec<usize> = (0..=14).map(|exp| 1usize << exp).collect();
@@ -97,8 +97,8 @@ fn bench_bsgs_batched32(c: &mut Criterion) {
     group.finish();
 }
 
-fn bench_bsgs_batched32_small_secrets(c: &mut Criterion) {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+fn bench_bsgs_k_32_small_secrets(c: &mut Criterion) {
+    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
 
     // k values: 64, 128, 1024, 2048
     let k_values: Vec<usize> = vec![64, 128, 1024, 2048];
@@ -145,11 +145,8 @@ criterion_group! {
     config = Criterion::default().sample_size(50);
     targets = bench_bsgs32
 }
-criterion_group!(bsgs_batched32_group, bench_bsgs_batched32);
-criterion_group!(
-    bsgs_batched32_small_group,
-    bench_bsgs_batched32_small_secrets
-);
+criterion_group!(bsgs_k_32_group, bench_bsgs_k_32);
+criterion_group!(bsgs_k_32_small_group, bench_bsgs_k_32_small_secrets);
 
 criterion_main!(
     bl12_16_group,
@@ -157,6 +154,6 @@ criterion_main!(
     bl12_48_group,
     point_ops_group,
     bsgs32_group,
-    bsgs_batched32_group,
-    bsgs_batched32_small_group
+    bsgs_k_32_group,
+    bsgs_k_32_small_group
 );

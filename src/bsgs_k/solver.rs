@@ -1,4 +1,4 @@
-use super::BabyGiantBatched;
+use super::BabyGiantK;
 
 use anyhow::Result;
 use curve25519_dalek::ristretto::RistrettoPoint;
@@ -6,8 +6,8 @@ use curve25519_dalek::traits::Identity;
 use std::ops::Add;
 use web_time::{Duration, Instant};
 
-impl BabyGiantBatched {
-    /// Solves the discrete logarithm problem using batched Baby-step Giant-step.
+impl BabyGiantK {
+    /// Solves the discrete logarithm problem using BSGS-k.
     ///
     /// Given pk = g^x, finds x where x is in [0, 2^secret_size).
     ///

@@ -1,4 +1,4 @@
-use super::{BsgsBatchedParameters, BsgsBatchedTable};
+use super::{BsgsKParameters, BsgsKTable};
 
 use anyhow::Result;
 use curve25519_dalek::{
@@ -7,13 +7,13 @@ use curve25519_dalek::{
 use std::collections::HashMap;
 use std::ops::Mul;
 
-impl BsgsBatchedTable {
-    /// Generates the batched BSGS table with DOUBLED baby steps.
+impl BsgsKTable {
+    /// Generates the BSGS-k table with DOUBLED baby steps.
     ///
     /// Baby step: Compute 2*g^j for j = 0, 1, ..., m-1 and store compressed in a hash table.
     /// We store doubled points so we can use `double_and_compress_batch` during solving.
     /// Also precompute g^(-m) for the giant step phase.
-    pub fn generate(parameters: &BsgsBatchedParameters) -> Result<BsgsBatchedTable> {
+    pub fn generate(parameters: &BsgsKParameters) -> Result<BsgsKTable> {
         if parameters.secret_size < 1 || parameters.secret_size > 64 {
             return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
         }
@@ -45,7 +45,7 @@ impl BsgsBatchedTable {
         let neg_m = -m_scalar;
         let giant_step = g.mul(neg_m);
 
-        Ok(BsgsBatchedTable {
+        Ok(BsgsKTable {
             baby_steps,
             giant_step,
             neg_m,

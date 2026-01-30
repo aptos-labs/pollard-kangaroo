@@ -2,8 +2,8 @@
 pub mod bl12;
 #[cfg(feature = "bsgs")]
 pub mod bsgs;
-#[cfg(feature = "bsgs_batched")]
-pub mod bsgs_batched;
+#[cfg(feature = "bsgs_k")]
+pub mod bsgs_k;
 pub mod traits;
 pub mod utils;
 

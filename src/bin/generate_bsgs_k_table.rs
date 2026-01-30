@@ -1,11 +1,11 @@
-//! Binary to generate precomputed batched BSGS tables.
+//! Binary to generate precomputed BSGS-k tables.
 //!
-//! Usage: cargo run --bin generate_bsgs_batched_table --features serde -- <bits>
+//! Usage: cargo run --bin generate_bsgs_k_table --features serde -- <bits>
 //!
-//! Example: cargo run --bin generate_bsgs_batched_table --features serde -- 32
+//! Example: cargo run --bin generate_bsgs_k_table --features serde -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::bsgs_batched::{BabyGiantBatched, BsgsBatchedParameters};
+use pollard_kangaroo::bsgs_k::{BabyGiantK, BsgsKParameters};
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -29,24 +29,24 @@ fn main() -> Result<()> {
     // m = ceil(sqrt(2^bits)) = 2^(bits/2)
     let m: u64 = 1 << (bits / 2);
 
-    println!("Generating batched BSGS table for {}-bit secrets...", bits);
+    println!("Generating BSGS-k table for {}-bit secrets...", bits);
     println!("Table size m = {} (doubled baby steps)", m);
     println!("This will take some time...");
 
-    let parameters = BsgsBatchedParameters {
+    let parameters = BsgsKParameters {
         secret_size: bits,
         m,
     };
 
     let start = std::time::Instant::now();
-    let bsgs = BabyGiantBatched::from_parameters(parameters)
-        .context("failed to generate batched BSGS table")?;
+    let bsgs =
+        BabyGiantK::from_parameters(parameters).context("failed to generate BSGS-k table")?;
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());
 
     // Serialize and save
-    let output_path = format!("src/bsgs_batched/rsc/table_{}", bits);
+    let output_path = format!("src/bsgs_k/rsc/table_{}", bits);
     let output_path = Path::new(&output_path);
 
     // Create parent directories if they don't exist
@@ -54,7 +54,7 @@ fn main() -> Result<()> {
         std::fs::create_dir_all(parent).context("failed to create output directory")?;
     }
 
-    let serialized = bincode::serialize(&bsgs).context("failed to serialize batched BSGS table")?;
+    let serialized = bincode::serialize(&bsgs).context("failed to serialize BSGS-k table")?;
 
     let mut file = File::create(output_path).context("failed to create output file")?;
     file.write_all(&serialized)

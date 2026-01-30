@@ -4,8 +4,8 @@ use pollard_kangaroo::bl12::presets::Presets;
 use pollard_kangaroo::bl12::Bl12;
 use pollard_kangaroo::bsgs::presets::BsgsPresets;
 use pollard_kangaroo::bsgs::BabyGiant;
-use pollard_kangaroo::bsgs_batched::presets::BsgsBatchedPresets;
-use pollard_kangaroo::bsgs_batched::BabyGiantBatched;
+use pollard_kangaroo::bsgs_k::presets::BsgsKPresets;
+use pollard_kangaroo::bsgs_k::BabyGiantK;
 use pollard_kangaroo::utils;
 use std::ops::Mul;
 
@@ -50,8 +50,8 @@ fn bsgs_solves_32_bit_dl() {
 }
 
 #[test]
-fn bsgs_batched_solves_32_bit_dl_k64() {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+fn bsgs_k_solves_32_bit_dl_k64() {
+    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
@@ -61,8 +61,8 @@ fn bsgs_batched_solves_32_bit_dl_k64() {
 }
 
 #[test]
-fn bsgs_batched_solves_32_bit_dl_k256() {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+fn bsgs_k_solves_32_bit_dl_k256() {
+    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
@@ -72,8 +72,8 @@ fn bsgs_batched_solves_32_bit_dl_k256() {
 }
 
 #[test]
-fn bsgs_batched_solves_32_bit_dl_k1024() {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+fn bsgs_k_solves_32_bit_dl_k1024() {
+    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
@@ -90,8 +90,8 @@ fn bsgs_batched_solves_32_bit_dl_k1024() {
 ///
 /// The curve25519-dalek library handles identity correctly in double_and_compress_batch.
 #[test]
-fn bsgs_batched_handles_identity_point_secrets() {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+fn bsgs_k_handles_identity_point_secrets() {
+    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
 
     // m = 2^16 = 65536 for 32-bit table
     let m: u64 = 65536;
