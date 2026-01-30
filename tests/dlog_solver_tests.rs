@@ -9,11 +9,11 @@ use curve25519_dalek::ristretto::RistrettoPoint;
 use pollard_kangaroo::DlogSolver;
 
 /// Generic test function that tests a DlogSolver implementation for all values
-/// in [0, 2^secret_bits).
-fn test_all_values<S: DlogSolver>(secret_bits: u8) {
-    let solver = S::new(secret_bits).expect("Failed to create solver");
+/// in [0, 2^max_num_bits).
+fn test_all_values<S: DlogSolver>(max_num_bits: u8) {
+    let solver = S::new_and_compute_table(max_num_bits).expect("Failed to create solver");
 
-    let max_value = 1u64 << secret_bits;
+    let max_value = 1u64 << max_num_bits;
     let g = RISTRETTO_BASEPOINT_POINT;
 
     // Start with g^0 = identity, then increment via EC addition: g^(x+1) = g^x + g
@@ -27,8 +27,8 @@ fn test_all_values<S: DlogSolver>(secret_bits: u8) {
 
         assert_eq!(
             result, x,
-            "Failed for secret_bits={}, x={}: got {}",
-            secret_bits, x, result
+            "Failed for max_num_bits={}, x={}: got {}",
+            max_num_bits, x, result
         );
 
         // g^(x+1) = g^x + g

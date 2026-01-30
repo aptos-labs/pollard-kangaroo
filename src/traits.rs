@@ -9,14 +9,12 @@ use curve25519_dalek::ristretto::RistrettoPoint;
 /// and then solve discrete logarithms efficiently.
 pub trait DlogSolver: Sized {
     /// Creates a new solver with precomputed tables for solving DLog
-    /// on values in the range [0, 2^secret_bits).
+    /// on values in the range [0, 2^max_num_bits).
     ///
     /// # Arguments
-    /// * `secret_bits` - The number of bits in the secret (ℓ). The solver
-    ///   will be able to find discrete logs for values < 2^secret_bits.
-    /// TODO: rename this `secret_bits` (and its associated getter function) to max_num_bits; do it everywhere where this "secret_bits" notion/terminology is used, not just in this file
-    /// TODO: rename this function to `new_and_compute_table`
-    fn new(secret_bits: u8) -> Result<Self>;
+    /// * `max_num_bits` - The number of bits (ℓ). The solver will be able to
+    ///   find discrete logs for values < 2^max_num_bits.
+    fn new_and_compute_table(max_num_bits: u8) -> Result<Self>;
 
     /// Solves the discrete logarithm problem.
     ///
@@ -33,5 +31,5 @@ pub trait DlogSolver: Sized {
     fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>>;
 
     /// Returns the maximum number of bits this solver can handle.
-    fn secret_bits(&self) -> u8;
+    fn max_num_bits(&self) -> u8;
 }

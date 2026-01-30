@@ -263,10 +263,10 @@ fn get_last_point_bytes(compressed_point: &CompressedRistretto) -> u64 {
 }
 
 impl crate::DlogSolver for Bl12 {
-    fn new(secret_bits: u8) -> Result<Self> {
-        // Generate reasonable parameters based on secret_bits
+    fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
+        // Generate reasonable parameters based on max_num_bits
         // These are heuristics based on the existing presets
-        let parameters = Parameters::for_secret_bits(secret_bits)?;
+        let parameters = Parameters::for_max_num_bits(max_num_bits)?;
         Self::from_parameters(parameters)
     }
 
@@ -274,32 +274,32 @@ impl crate::DlogSolver for Bl12 {
         self.solve_dlp(pk, None)
     }
 
-    fn secret_bits(&self) -> u8 {
+    fn max_num_bits(&self) -> u8 {
         self.parameters.secret_size
     }
 }
 
 impl Parameters {
-    /// Creates reasonable parameters for a given secret bit size.
-    pub fn for_secret_bits(secret_bits: u8) -> Result<Self> {
-        if secret_bits < 1 || secret_bits > 64 {
-            return Err(anyhow::anyhow!("secret_bits must be between 1 and 64"));
+    /// Creates reasonable parameters for a given max number of bits.
+    pub fn for_max_num_bits(max_num_bits: u8) -> Result<Self> {
+        if max_num_bits < 1 || max_num_bits > 64 {
+            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
         }
 
         // For small bit sizes (1-7), use parameters that still exercise the
         // random walk logic. W > 1 ensures not every point is distinguished,
         // so the algorithm actually walks before finding distinguished points.
-        if secret_bits < 8 {
+        if max_num_bits < 8 {
             // W controls distinguished point frequency: 1/W points are distinguished.
             // For very small spaces (1-3 bits), use W=2 (50% distinguished).
             // For slightly larger (4-7 bits), use W=4 (25% distinguished).
-            let w = if secret_bits <= 3 { 2 } else { 4 };
+            let w = if max_num_bits <= 3 { 2 } else { 4 };
 
             // N is the table size (number of distinguished points to collect).
             // For small spaces, we need N to be small enough that table generation
             // can find that many unique distinguished points without getting stuck.
-            // Use roughly sqrt(2^secret_bits) * 2 as a reasonable target.
-            let n = match secret_bits {
+            // Use roughly sqrt(2^max_num_bits) * 2 as a reasonable target.
+            let n = match max_num_bits {
                 1 => 2,
                 2 => 4,
                 3 => 8,
@@ -311,7 +311,7 @@ impl Parameters {
             };
 
             // R is the number of step scalars (must be power of 2).
-            let r = if secret_bits <= 4 { 4 } else { 8 };
+            let r = if max_num_bits <= 4 { 4 } else { 8 };
 
             // i * W gives the max iterations before restarting the walk.
             // Use larger i for small spaces to give more chances to find distinguished points.
@@ -322,7 +322,7 @@ impl Parameters {
                 W: w,
                 N: n,
                 R: r,
-                secret_size: secret_bits,
+                secret_size: max_num_bits,
             });
         }
 
@@ -332,11 +332,11 @@ impl Parameters {
         // - R (number of step scalars) is kept small (power of 2)
         // - i (iteration multiplier) is kept constant at 8
 
-        let w_exp = secret_bits.saturating_sub(4).min(16);
+        let w_exp = max_num_bits.saturating_sub(4).min(16);
         let w = 1u64 << w_exp;
 
-        // Table size: roughly sqrt(2^secret_bits) / some factor
-        let n = match secret_bits {
+        // Table size: roughly sqrt(2^max_num_bits) / some factor
+        let n = match max_num_bits {
             8..=16 => 1000,
             17..=24 => 4000,
             25..=32 => 8000,
@@ -345,8 +345,8 @@ impl Parameters {
             _ => 80000,
         };
 
-        // R should be a power of 2, scaled with secret_bits
-        let r = match secret_bits {
+        // R should be a power of 2, scaled with max_num_bits
+        let r = match max_num_bits {
             8..=16 => 64,
             17..=32 => 128,
             _ => 256,
@@ -357,7 +357,7 @@ impl Parameters {
             W: w,
             N: n,
             R: r,
-            secret_size: secret_bits,
+            secret_size: max_num_bits,
         })
     }
 }

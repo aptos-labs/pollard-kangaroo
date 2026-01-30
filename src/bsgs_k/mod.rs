@@ -204,16 +204,16 @@ impl BabyStepGiantStepKTable {
 }
 
 impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
-    fn new(secret_bits: u8) -> Result<Self> {
-        if secret_bits < 1 || secret_bits > 64 {
-            return Err(anyhow::anyhow!("secret_bits must be between 1 and 64"));
+    fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
+        if max_num_bits < 1 || max_num_bits > 64 {
+            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
         }
 
-        // m = ceil(sqrt(2^secret_bits)) = 2^(ceil(secret_bits/2))
-        let m: u64 = 1 << ((secret_bits + 1) / 2);
+        // m = ceil(sqrt(2^max_num_bits)) = 2^(ceil(max_num_bits/2))
+        let m: u64 = 1 << ((max_num_bits + 1) / 2);
 
         let parameters = BabyStepGiantStepKParameters {
-            secret_size: secret_bits,
+            secret_size: max_num_bits,
             m,
         };
         Self::from_parameters(parameters)
@@ -223,7 +223,7 @@ impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
         self.solve_dlp(pk, None)
     }
 
-    fn secret_bits(&self) -> u8 {
+    fn max_num_bits(&self) -> u8 {
         self.parameters.secret_size
     }
 }
