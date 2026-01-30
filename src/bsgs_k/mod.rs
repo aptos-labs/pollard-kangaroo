@@ -231,3 +231,59 @@ impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
         self.parameters.secret_size
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+    use curve25519_dalek::scalar::Scalar;
+    use std::ops::Mul;
+
+    /// Test BSGS-k with secrets that are multiples of m (65536).
+    /// These secrets cause gamma to hit the identity point during giant steps.
+    ///
+    /// For secret x = m * i, at giant step i:
+    ///   gamma = g^x * (g^(-m))^i = g^(m*i) * g^(-m*i) = g^0 = identity
+    ///
+    /// The curve25519-dalek library handles identity correctly in double_and_compress_batch.
+    #[test]
+    fn bsgs_k_handles_identity_point_secrets() {
+        // m = 2^16 = 65536 for 32-bit table
+        let m: u64 = 65536;
+
+        // Test secrets that are multiples of m (these hit identity during giant steps)
+        let problematic_secrets = [
+            0u64,        // identity at step 0 (handled by early return, but let's test anyway)
+            m,           // identity at step 1
+            2 * m,       // identity at step 2
+            3 * m,       // identity at step 3
+            m + 1,       // near multiple of m
+            m - 1,       // near multiple of m
+            2 * m + 100, // offset from multiple
+        ];
+
+        // Test with K=64
+        let bsgs64 = BabyStepGiantStepK::<64>::from_precomputed_table(
+            crate::bsgs_k::precomputed_tables::PrecomputedTables::BabyStepGiantStep32,
+        )
+        .unwrap();
+
+        for &secret in &problematic_secrets {
+            let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
+            let result = bsgs64.solve_dlp(&pk, None).unwrap();
+            assert_eq!(result, secret, "Failed for secret={} with K=64", secret);
+        }
+
+        // Test with K=256
+        let bsgs256 = BabyStepGiantStepK::<256>::from_precomputed_table(
+            crate::bsgs_k::precomputed_tables::PrecomputedTables::BabyStepGiantStep32,
+        )
+        .unwrap();
+
+        for &secret in &problematic_secrets {
+            let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
+            let result = bsgs256.solve_dlp(&pk, None).unwrap();
+            assert_eq!(result, secret, "Failed for secret={} with K=256", secret);
+        }
+    }
+}
