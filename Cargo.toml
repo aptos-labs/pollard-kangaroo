@@ -4,12 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["table16", "table32", "table48"]
+default = ["table16", "table32", "table48", "bsgs_table32"]
 serde = ["dep:serde", "dep:serde_with"]
 presets = ["serde", "dep:bincode"]
 table16 = ["presets"]
 table32 = ["presets"]
 table48 = ["presets"]
+# BSGS features
+bsgs_presets = ["serde", "dep:bincode"]
+bsgs_table32 = ["bsgs_presets"]
 
 [dependencies]
 curve25519-dalek-ng = { version = "4", features = ["serde"] }

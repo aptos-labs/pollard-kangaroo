@@ -1,6 +1,8 @@
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 use curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek_ng::scalar::Scalar;
+use pollard_kangaroo::bsgs::presets::BsgsPresets;
+use pollard_kangaroo::bsgs::BabyGiant;
 use pollard_kangaroo::kangaroo::presets::Presets;
 use pollard_kangaroo::kangaroo::Kangaroo;
 use pollard_kangaroo::utils;
@@ -52,14 +54,35 @@ fn bench_point_addition(c: &mut Criterion) {
     });
 }
 
+fn bench_point_compression(c: &mut Criterion) {
+    // Generate a random point
+    let p = RISTRETTO_BASEPOINT_POINT * Scalar::random(&mut OsRng);
+
+    c.bench_function("ristretto255 point compression", |b| {
+        b.iter(|| black_box(p).compress())
+    });
+}
+
+fn bench_bsgs32(c: &mut Criterion) {
+    let bsgs32 = BabyGiant::from_preset(BsgsPresets::BabyGiant32).unwrap();
+
+    c.bench_function("BSGS 32-bit secrets", |b| {
+        b.iter_batched(
+            || utils::generate_keypair(32).unwrap(),
+            |(_sk, pk)| bsgs32.solve_dlp(&pk, None),
+            BatchSize::SmallInput,
+        )
+    });
+}
+
 criterion_group! {
     name = kangaroo16_group;
-    config = Criterion::default().sample_size(200);
+    config = Criterion::default().sample_size(100);
     targets = bench_kangaroo16
 }
 criterion_group! {
     name = kangaroo32_group;
-    config = Criterion::default().sample_size(200);
+    config = Criterion::default().sample_size(100);
     targets = bench_kangaroo32
 }
 criterion_group! {
@@ -68,9 +91,17 @@ criterion_group! {
     targets = bench_kangaroo48
 }
 criterion_group!(point_addition_group, bench_point_addition);
+criterion_group!(point_compression_group, bench_point_compression);
+criterion_group! {
+    name = bsgs32_group;
+    config = Criterion::default().sample_size(50);
+    targets = bench_bsgs32
+}
 criterion_main!(
     kangaroo16_group,
     kangaroo32_group,
     kangaroo48_group,
-    point_addition_group
+    point_addition_group,
+    point_compression_group,
+    bsgs32_group
 );

@@ -30,6 +30,11 @@ pub fn scalar_to_u64(scalar: &Scalar) -> u64 {
     u64::from_le_bytes(u64_bytes.try_into().unwrap())
 }
 
+/// Converts a u64 to a scalar.
+pub fn u64_to_scalar(value: u64) -> Scalar {
+    Scalar::from(value)
+}
+
 /// Generates a random scalar and its corresponding "public key".
 pub fn generate_keypair(bits: u8) -> Result<(Scalar, RistrettoPoint)> {
     let sk = generate_random_scalar(bits).context("failed to generate secret")?;
