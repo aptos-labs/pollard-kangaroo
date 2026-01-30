@@ -83,21 +83,21 @@ macro_rules! bench_bsgs_k {
     };
 }
 
-bench_bsgs_k!(bench_bsgs_k_1, 1);
-bench_bsgs_k!(bench_bsgs_k_2, 2);
-bench_bsgs_k!(bench_bsgs_k_4, 4);
-bench_bsgs_k!(bench_bsgs_k_8, 8);
-bench_bsgs_k!(bench_bsgs_k_16, 16);
-bench_bsgs_k!(bench_bsgs_k_32, 32);
-bench_bsgs_k!(bench_bsgs_k_64, 64);
-bench_bsgs_k!(bench_bsgs_k_128, 128);
-bench_bsgs_k!(bench_bsgs_k_256, 256);
-bench_bsgs_k!(bench_bsgs_k_512, 512);
-bench_bsgs_k!(bench_bsgs_k_1024, 1024);
-bench_bsgs_k!(bench_bsgs_k_2048, 2048);
-bench_bsgs_k!(bench_bsgs_k_4096, 4096);
-bench_bsgs_k!(bench_bsgs_k_8192, 8192);
-bench_bsgs_k!(bench_bsgs_k_16384, 16384);
+bench_bsgs_k!(bench_bsgs_k1, 1);
+bench_bsgs_k!(bench_bsgs_k2, 2);
+bench_bsgs_k!(bench_bsgs_k4, 4);
+bench_bsgs_k!(bench_bsgs_k8, 8);
+bench_bsgs_k!(bench_bsgs_k16, 16);
+bench_bsgs_k!(bench_bsgs_k32, 32);
+bench_bsgs_k!(bench_bsgs_k64, 64);
+bench_bsgs_k!(bench_bsgs_k128, 128);
+bench_bsgs_k!(bench_bsgs_k256, 256);
+bench_bsgs_k!(bench_bsgs_k512, 512);
+bench_bsgs_k!(bench_bsgs_k1024, 1024);
+bench_bsgs_k!(bench_bsgs_k2048, 2048);
+bench_bsgs_k!(bench_bsgs_k4096, 4096);
+bench_bsgs_k!(bench_bsgs_k8192, 8192);
+bench_bsgs_k!(bench_bsgs_k16384, 16384);
 
 /// Macro to generate benchmarks for different K values with small secrets
 macro_rules! bench_bsgs_k_small {
@@ -127,12 +127,12 @@ bench_bsgs_k_small!(bench_bsgs_k_small_1024, 1024);
 bench_bsgs_k_small!(bench_bsgs_k_small_2048, 2048);
 
 criterion_group! {
-    name = bl12_32_group;
+    name = bl12_32bit_group;
     config = Criterion::default().sample_size(100);
     targets = bench_bl12_32
 }
 criterion_group! {
-    name = bl12_48_group;
+    name = bl12_48bit_group;
     config = Criterion::default().sample_size(10);
     targets = bench_bl12_48
 }
@@ -142,32 +142,32 @@ criterion_group!(
     bench_point_compression
 );
 criterion_group! {
-    name = bsgs32_group;
+    name = bsgs_32bit_group;
     config = Criterion::default().sample_size(50);
     targets = bench_bsgs32
 }
 criterion_group! {
-    name = bsgs_k_32_group;
+    name = bsgs_32bit_k32_group;
     config = Criterion::default().sample_size(50);
     targets =
-        bench_bsgs_k_1,
-        bench_bsgs_k_2,
-        bench_bsgs_k_4,
-        bench_bsgs_k_8,
-        bench_bsgs_k_16,
-        bench_bsgs_k_32,
-        bench_bsgs_k_64,
-        bench_bsgs_k_128,
-        bench_bsgs_k_256,
-        bench_bsgs_k_512,
-        bench_bsgs_k_1024,
-        bench_bsgs_k_2048,
-        bench_bsgs_k_4096,
-        bench_bsgs_k_8192,
-        bench_bsgs_k_16384
+        bench_bsgs_k1,
+        bench_bsgs_k2,
+        bench_bsgs_k4,
+        bench_bsgs_k8,
+        bench_bsgs_k16,
+        bench_bsgs_k32,
+        bench_bsgs_k64,
+        bench_bsgs_k128,
+        bench_bsgs_k256,
+        bench_bsgs_k512,
+        bench_bsgs_k1024,
+        bench_bsgs_k2048,
+        bench_bsgs_k4096,
+        bench_bsgs_k8192,
+        bench_bsgs_k16384
 }
 criterion_group! {
-    name = bsgs_k_32_small_group;
+    name = bsgs_32bit_k32_small_group;
     config = Criterion::default().sample_size(100);
     targets =
         bench_bsgs_k_small_64,
@@ -177,10 +177,10 @@ criterion_group! {
 }
 
 criterion_main!(
-    bl12_32_group,
-    bl12_48_group,
     point_ops_group,
-    bsgs32_group,
-    bsgs_k_32_group,
-    bsgs_k_32_small_group
+    bl12_32bit_group,
+    bl12_48bit_group,
+    bsgs_32bit_group,
+    bsgs_32bit_k32_group,
+    bsgs_32bit_k32_small_group
 );
