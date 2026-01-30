@@ -36,7 +36,11 @@ mod dlog_with_precomputed_tables {
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
-        assert_eq!(bl12_32.solve_dlp(&pk, None).unwrap(), sk_u64);
+        // Use the seeded RNG for the solver as well (BL12 is randomized)
+        assert_eq!(
+            bl12_32.solve_dlp_with_rng(&pk, None, &mut rng).unwrap(),
+            sk_u64
+        );
     }
 
     #[test]
@@ -48,7 +52,11 @@ mod dlog_with_precomputed_tables {
         let (sk, pk) = utils::generate_dlog_instance_with_rng(48, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
-        assert_eq!(bl12_48.solve_dlp(&pk, None).unwrap(), sk_u64);
+        // Use the seeded RNG for the solver as well (BL12 is randomized)
+        assert_eq!(
+            bl12_48.solve_dlp_with_rng(&pk, None, &mut rng).unwrap(),
+            sk_u64
+        );
     }
 
     #[test]
@@ -60,6 +68,7 @@ mod dlog_with_precomputed_tables {
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
+        // BSGS is deterministic, no RNG needed for solver
         assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
     }
 
@@ -73,6 +82,7 @@ mod dlog_with_precomputed_tables {
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
+        // BSGS-k is deterministic, no RNG needed for solver
         assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
     }
 
@@ -86,6 +96,7 @@ mod dlog_with_precomputed_tables {
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
+        // BSGS-k is deterministic, no RNG needed for solver
         assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
     }
 
@@ -99,6 +110,7 @@ mod dlog_with_precomputed_tables {
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
+        // BSGS-k is deterministic, no RNG needed for solver
         assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
     }
 }

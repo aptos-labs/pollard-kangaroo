@@ -101,7 +101,20 @@ impl Bl12 {
         Ok(bl12)
     }
 
+    /// Solves the discrete log problem using the default RNG (OsRng).
     pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
+        self.solve_dlp_with_rng(pk, max_time, &mut rand_core::OsRng)
+    }
+
+    /// Solves the discrete log problem using the provided RNG.
+    ///
+    /// This is useful for deterministic testing when a seeded RNG is provided.
+    pub fn solve_dlp_with_rng<R: rand_core::RngCore>(
+        &self,
+        pk: &RistrettoPoint,
+        max_time: Option<u64>,
+        rng: &mut R,
+    ) -> Result<u64> {
         if pk.eq(&RistrettoPoint::identity()) {
             return Ok(0);
         }
@@ -112,7 +125,7 @@ impl Bl12 {
             // wdist = r + slog_1 + slog_2 ...
             // For small secret sizes, use 0 or a small value
             let wdist_bits = self.parameters.secret_size.saturating_sub(8).max(1);
-            let mut wdist = utils::generate_random_scalar(wdist_bits)
+            let mut wdist = utils::generate_random_scalar_with_rng(wdist_bits, rng)
                 .context("failed to generate `wdist` scalar")?;
             // w = sk * G + r * G + slog_1 * G + slog_2 * G ... = sk * G + wdist * G
             let mut w = pk.add(RISTRETTO_BASEPOINT_POINT.mul(wdist));
