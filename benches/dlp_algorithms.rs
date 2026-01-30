@@ -7,6 +7,8 @@ use pollard_kangaroo::bsgs::precomputed_tables::PrecomputedTables as BsgsTables;
 use pollard_kangaroo::bsgs::BabyStepGiantStep;
 use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
+use pollard_kangaroo::naive_lookup::precomputed_tables::PrecomputedTables as NaiveLookupTables;
+use pollard_kangaroo::naive_lookup::NaiveLookup;
 use pollard_kangaroo::utils;
 
 // =============================================================================
@@ -99,6 +101,22 @@ fn bench_bsgs_k_18bit(c: &mut Criterion) {
 }
 
 // =============================================================================
+// Naive Lookup benchmarks
+// =============================================================================
+
+fn bench_naive_lookup_16bit(c: &mut Criterion) {
+    let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16).unwrap();
+
+    c.bench_function("[Naive Lookup] 16-bit secrets", |b| {
+        b.iter_batched(
+            || utils::generate_dlog_instance(16).unwrap(),
+            |(_sk, pk)| naive.solve_dlp(&pk, None),
+            BatchSize::SmallInput,
+        )
+    });
+}
+
+// =============================================================================
 // Criterion groups
 // =============================================================================
 
@@ -132,10 +150,17 @@ criterion_group! {
     targets = bench_bsgs_k_18bit
 }
 
+criterion_group! {
+    name = naive_lookup_16bit_group;
+    config = Criterion::default().sample_size(100);
+    targets = bench_naive_lookup_16bit
+}
+
 criterion_main!(
     bl12_32bit_group,
     bl12_48bit_group,
     bsgs_32bit_group,
     bsgs_k_32bit_group,
-    bsgs_k_18bit_group
+    bsgs_k_18bit_group,
+    naive_lookup_16bit_group
 );

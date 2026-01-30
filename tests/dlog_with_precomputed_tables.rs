@@ -10,6 +10,8 @@ mod dlog_with_precomputed_tables {
     use pollard_kangaroo::bsgs::BabyStepGiantStep;
     use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
     use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
+    use pollard_kangaroo::naive_lookup::precomputed_tables::PrecomputedTables as NaiveLookupTables;
+    use pollard_kangaroo::naive_lookup::NaiveLookup;
     use pollard_kangaroo::utils;
     use rand_chacha::ChaCha20Rng;
     use rand_core::{OsRng, RngCore, SeedableRng};
@@ -112,5 +114,17 @@ mod dlog_with_precomputed_tables {
 
         // BSGS-k is deterministic, no RNG needed for solver
         assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
+    }
+
+    #[test]
+    fn naive_lookup_solves_16_bit() {
+        let mut rng = create_seeded_rng("naive_lookup_solves_16_bit");
+        let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16).unwrap();
+
+        let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
+        let sk_u64 = utils::scalar_to_u64(&sk);
+
+        // Naive lookup is deterministic, no RNG needed for solver
+        assert_eq!(naive.solve_dlp(&pk, None).unwrap(), sk_u64);
     }
 }
