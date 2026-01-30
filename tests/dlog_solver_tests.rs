@@ -5,9 +5,8 @@
 //! verifying that the algorithm correctly solves DLog for all values in [0, 2^ℓ).
 
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek::scalar::Scalar;
+use curve25519_dalek::ristretto::RistrettoPoint;
 use pollard_kangaroo::DlogSolver;
-use std::ops::Mul;
 
 /// Generic test function that tests a DlogSolver implementation for all values
 /// in [0, 2^secret_bits).
@@ -15,10 +14,12 @@ fn test_all_values<S: DlogSolver>(secret_bits: u8) {
     let solver = S::new(secret_bits).expect("Failed to create solver");
 
     let max_value = 1u64 << secret_bits;
+    let g = RISTRETTO_BASEPOINT_POINT;
+
+    // Start with g^0 = identity, then increment via EC addition: g^(x+1) = g^x + g
+    let mut pk = RistrettoPoint::default(); // identity
 
     for x in 0..max_value {
-        // TODO: don't do a scalar multiplication here; you can just do an EC addition on the previous x and proceed faster
-        let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(x));
         let result = solver
             .solve(&pk)
             .expect("Solver returned error")
@@ -29,6 +30,9 @@ fn test_all_values<S: DlogSolver>(secret_bits: u8) {
             "Failed for secret_bits={}, x={}: got {}",
             secret_bits, x, result
         );
+
+        // g^(x+1) = g^x + g
+        pk = pk + g;
     }
 }
 
@@ -85,17 +89,11 @@ generate_dlog_tests!(pollard_kangaroo::bsgs::BabyStepGiantStep, bsgs);
 
 // Generate tests for BSGS-k with K=64
 #[cfg(feature = "bsgs_k")]
-generate_dlog_tests!(
-    pollard_kangaroo::bsgs_k::BabyStepGiantStepK<64>,
-    bsgs_k64
-);
+generate_dlog_tests!(pollard_kangaroo::bsgs_k::BabyStepGiantStepK<64>, bsgs_k64);
 
 // Generate tests for BSGS-k with K=256
 #[cfg(feature = "bsgs_k")]
-generate_dlog_tests!(
-    pollard_kangaroo::bsgs_k::BabyStepGiantStepK<256>,
-    bsgs_k256
-);
+generate_dlog_tests!(pollard_kangaroo::bsgs_k::BabyStepGiantStepK<256>, bsgs_k256);
 
 // Generate tests for [BL12]
 #[cfg(feature = "bl12")]
