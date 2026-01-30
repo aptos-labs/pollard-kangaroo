@@ -18,7 +18,18 @@ impl Table {
 
         let mut table = HashMap::new();
 
+        // Track attempts to detect if we're stuck finding the same distinguished points
+        let mut attempts = 0u64;
+        let max_attempts = parameters.N as u64 * 1000;
+
         while table.len() < parameters.N as usize {
+            attempts += 1;
+            if attempts > max_attempts {
+                // Give up if we can't find enough unique distinguished points.
+                // This can happen for very small search spaces.
+                break;
+            }
+
             let mut wlog = utils::generate_random_scalar(parameters.secret_size)
                 .context("failed to generate `wlog` scalar")?;
             let mut w = RISTRETTO_BASEPOINT_POINT.mul(wlog);
@@ -43,24 +54,39 @@ impl Table {
     }
 
     fn s_values_init(parameters: &Parameters) -> Result<(Vec<Scalar>, Vec<RistrettoPoint>)> {
-        // Calculate slog_size, handling small secret_size values
-        // For very small secret_size, we clamp to at least 1 bit
-        let search_space = 1u64 << parameters.secret_size.min(62);
-        let ratio = search_space
-            .saturating_div(4)
-            .saturating_div(parameters.W.max(1));
-        let slog_size = if ratio > 0 {
-            ratio.ilog2().max(1) as u8
+        // Calculate slog_size: step sizes should allow walks to cover the search space
+        // in roughly W steps (the expected distance between distinguished points).
+        //
+        // For small secret_size (< 8), use secret_size directly as slog_size so that
+        // steps can span the entire search space. This ensures the random walk can
+        // effectively explore small spaces.
+        //
+        // For larger secret_size, use the ratio-based calculation which gives
+        // step sizes proportional to search_space / (4 * W).
+        let slog_size = if parameters.secret_size < 8 {
+            parameters.secret_size.max(1)
         } else {
-            1
+            let search_space = 1u64 << parameters.secret_size.min(62);
+            let ratio = search_space
+                .saturating_div(4)
+                .saturating_div(parameters.W.max(1));
+            if ratio > 0 {
+                ratio.ilog2().max(1) as u8
+            } else {
+                1
+            }
         };
 
         let mut scalars = Vec::with_capacity(parameters.R as usize);
         let mut points = Vec::with_capacity(parameters.R as usize);
 
         for _ in 0..parameters.R {
-            let slog = utils::generate_random_scalar(slog_size)
+            // Generate step size in range [1, 2^slog_size] to ensure non-zero steps
+            // and good variety. We generate a random value and add 1.
+            let random_part = utils::generate_random_scalar(slog_size)
                 .context("failed to generate `slog` scalar")?;
+            let slog = random_part + Scalar::ONE;
+
             let s = RISTRETTO_BASEPOINT_POINT.mul(slog);
 
             scalars.push(slog);

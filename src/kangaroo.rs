@@ -143,19 +143,22 @@ impl Parameters {
         // so the algorithm actually walks before finding distinguished points.
         if secret_bits < 8 {
             // W controls distinguished point frequency: 1/W points are distinguished.
-            // Use W=2 for very small spaces, W=4 for slightly larger.
+            // For very small spaces (1-3 bits), use W=2 (50% distinguished).
+            // For slightly larger (4-7 bits), use W=4 (25% distinguished).
             let w = if secret_bits <= 3 { 2 } else { 4 };
 
             // N is the table size (number of distinguished points to collect).
-            // Make it proportional to the search space to ensure good coverage.
+            // For small spaces, we need N to be small enough that table generation
+            // can find that many unique distinguished points without getting stuck.
+            // Use roughly sqrt(2^secret_bits) * 2 as a reasonable target.
             let n = match secret_bits {
-                1 => 4,
-                2 => 8,
-                3 => 16,
-                4 => 32,
-                5 => 64,
-                6 => 128,
-                7 => 256,
+                1 => 2,
+                2 => 4,
+                3 => 8,
+                4 => 16,
+                5 => 32,
+                6 => 64,
+                7 => 128,
                 _ => unreachable!(),
             };
 
@@ -163,7 +166,8 @@ impl Parameters {
             let r = if secret_bits <= 4 { 4 } else { 8 };
 
             // i * W gives the max iterations before restarting the walk.
-            let i = 8;
+            // Use larger i for small spaces to give more chances to find distinguished points.
+            let i = 16;
 
             return Ok(Parameters {
                 i,
