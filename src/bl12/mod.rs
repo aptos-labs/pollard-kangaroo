@@ -118,7 +118,7 @@ impl Bl12 {
             for _ in 0..self.table.i * self.table.W {
                 let w_compressed = w.compress();
 
-                if is_distinguished(&w_compressed, &self.table) {
+                if self.table.is_distinguished(&w_compressed) {
                     if let Some(value) = self.table.distinguished_points.get(&w_compressed) {
                         // value * G = sk * G + wdist * G => sk = value - wdist
                         let sk = value.sub(wdist);
@@ -137,7 +137,7 @@ impl Bl12 {
                     }
                 }
 
-                let h = hash(&w_compressed, &self.table) as usize;
+                let h = self.table.hash(&w_compressed) as usize;
 
                 wdist.add_assign(&self.table.slog[h]);
                 w.add_assign(&self.table.s[h]);
@@ -178,12 +178,12 @@ impl Table {
             for _ in 0..i * w {
                 let current_compressed = current.compress();
 
-                if is_distinguished_with_params(&current_compressed, w) {
+                if Self::is_distinguished_with_params(&current_compressed, w) {
                     distinguished_points.insert(current_compressed, wlog);
                     break;
                 }
 
-                let h = hash_with_params(&current_compressed, r) as usize;
+                let h = Self::hash_with_params(&current_compressed, r) as usize;
 
                 wlog.add_assign(slog[h]);
                 current.add_assign(s[h]);
@@ -283,35 +283,37 @@ impl Table {
 
         Ok((scalars, points))
     }
-}
 
-fn is_distinguished(compressed_point: &CompressedRistretto, table: &Table) -> bool {
-    is_distinguished_with_params(compressed_point, table.W)
-}
+    /// Checks if a point is distinguished based on this table's W parameter.
+    fn is_distinguished(&self, compressed_point: &CompressedRistretto) -> bool {
+        Self::is_distinguished_with_params(compressed_point, self.W)
+    }
 
-fn is_distinguished_with_params(compressed_point: &CompressedRistretto, w: u64) -> bool {
-    let point_bytes = get_last_point_bytes(compressed_point);
-    (point_bytes & (w - 1)) == 0
-}
+    /// Checks if a point is distinguished based on the given W parameter.
+    fn is_distinguished_with_params(compressed_point: &CompressedRistretto, w: u64) -> bool {
+        let point_bytes = Self::get_last_point_bytes(compressed_point);
+        (point_bytes & (w - 1)) == 0
+    }
 
-/// Gets a new index from the provided compressed Ristretto point. The index is meant to be used
-/// for retrieving elements from [`Table`] `s` and `slog` vectors.
-///
-/// Note: it does not perform hashing. However, in the original reference implementation authors
-/// (Daniel J. Bernstein and Tanja Lange) use exactly the same name.
-fn hash(compressed_point: &CompressedRistretto, table: &Table) -> u64 {
-    hash_with_params(compressed_point, table.R)
-}
+    /// Gets a new index from the provided compressed Ristretto point. The index is meant to be used
+    /// for retrieving elements from `s` and `slog` vectors.
+    ///
+    /// Note: it does not perform hashing. However, in the original reference implementation authors
+    /// (Daniel J. Bernstein and Tanja Lange) use exactly the same name.
+    fn hash(&self, compressed_point: &CompressedRistretto) -> u64 {
+        Self::hash_with_params(compressed_point, self.R)
+    }
 
-fn hash_with_params(compressed_point: &CompressedRistretto, r: u64) -> u64 {
-    let point_bytes = get_last_point_bytes(compressed_point);
-    point_bytes & (r - 1)
-}
+    /// Gets a hash index based on the given R parameter.
+    fn hash_with_params(compressed_point: &CompressedRistretto, r: u64) -> u64 {
+        let point_bytes = Self::get_last_point_bytes(compressed_point);
+        point_bytes & (r - 1)
+    }
 
-fn get_last_point_bytes(compressed_point: &CompressedRistretto) -> u64 {
-    let (_, point_bytes) = compressed_point.as_bytes().split_at(32 - size_of::<u64>());
-
-    u64::from_be_bytes(point_bytes.try_into().unwrap())
+    fn get_last_point_bytes(compressed_point: &CompressedRistretto) -> u64 {
+        let (_, point_bytes) = compressed_point.as_bytes().split_at(32 - size_of::<u64>());
+        u64::from_be_bytes(point_bytes.try_into().unwrap())
+    }
 }
 
 impl crate::DlogSolver for Bl12 {
