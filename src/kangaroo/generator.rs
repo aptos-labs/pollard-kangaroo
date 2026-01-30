@@ -2,7 +2,7 @@ use crate::kangaroo::{self, Parameters, Table};
 use crate::utils;
 
 use anyhow::{Context, Result};
-use curve25519_dalek_ng::{
+use curve25519_dalek::{
     constants::RISTRETTO_BASEPOINT_POINT, ristretto::RistrettoPoint, scalar::Scalar,
 };
 use std::collections::HashMap;

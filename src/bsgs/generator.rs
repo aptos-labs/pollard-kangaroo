@@ -1,7 +1,7 @@
 use crate::bsgs::{BsgsParameters, BsgsTable};
 
 use anyhow::Result;
-use curve25519_dalek_ng::{
+use curve25519_dalek::{
     constants::RISTRETTO_BASEPOINT_POINT, ristretto::RistrettoPoint, scalar::Scalar,
 };
 use std::collections::HashMap;

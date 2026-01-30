@@ -9,8 +9,8 @@ pub mod solver;
 use crate::kangaroo::presets::Presets;
 
 use anyhow::{Context, Result};
-use curve25519_dalek_ng::ristretto::{CompressedRistretto, RistrettoPoint};
-use curve25519_dalek_ng::scalar::Scalar;
+use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
+use curve25519_dalek::scalar::Scalar;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]

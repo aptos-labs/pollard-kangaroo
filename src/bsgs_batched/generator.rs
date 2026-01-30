@@ -1,11 +1,8 @@
 use crate::bsgs_batched::{BsgsBatchedParameters, BsgsBatchedTable};
 
 use anyhow::Result;
-use curve25519_dalek_ng::{
-    constants::RISTRETTO_BASEPOINT_POINT,
-    ristretto::{CompressedRistretto, RistrettoPoint},
-    scalar::Scalar,
-    traits::Identity,
+use curve25519_dalek::{
+    constants::RISTRETTO_BASEPOINT_POINT, ristretto::RistrettoPoint, scalar::Scalar,
 };
 use std::collections::HashMap;
 use std::ops::Mul;
@@ -24,29 +21,22 @@ impl BsgsBatchedTable {
         let m = parameters.m;
         let g = RISTRETTO_BASEPOINT_POINT;
 
-        // Baby steps: compute g^1, g^2, ..., g^(m-1), then double and compress
-        // Note: we skip g^0 (identity) because double_and_compress_batch panics on identity
-        let mut points = Vec::with_capacity((m - 1) as usize);
-        let mut current = g; // start with g^1
+        // Baby steps: compute g^0, g^1, g^2, ..., g^(m-1)
+        let mut points = Vec::with_capacity(m as usize);
+        let mut current = RistrettoPoint::default(); // identity = g^0
 
-        for _ in 1..m {
+        for _ in 0..m {
             points.push(current);
             current = current + g;
         }
 
-        // Double and compress all non-identity points in a batch
+        // Double and compress all points in a batch
         let doubled_compressed = RistrettoPoint::double_and_compress_batch(&points);
 
         // Build the lookup table: compressed(2*g^j) -> j
         let mut baby_steps = HashMap::with_capacity(m as usize);
-
-        // Handle identity specially: 2*identity = identity
-        baby_steps.insert(CompressedRistretto::identity(), 0u64);
-
-        // Add the rest (j = 1, 2, ..., m-1)
-        for (idx, compressed) in doubled_compressed.into_iter().enumerate() {
-            let j = (idx + 1) as u64;
-            baby_steps.insert(compressed, j);
+        for (j, compressed) in doubled_compressed.into_iter().enumerate() {
+            baby_steps.insert(compressed, j as u64);
         }
 
         // Compute g^(-m) for giant steps

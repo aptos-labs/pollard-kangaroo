@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
-use curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek_ng::scalar::Scalar;
+use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+use curve25519_dalek::scalar::Scalar;
 use pollard_kangaroo::bsgs::presets::BsgsPresets;
 use pollard_kangaroo::bsgs::BabyGiant;
 use pollard_kangaroo::bsgs_batched::presets::BsgsBatchedPresets;

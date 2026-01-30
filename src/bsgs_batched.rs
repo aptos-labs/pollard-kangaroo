@@ -10,14 +10,13 @@ pub mod generator;
 #[cfg(feature = "bsgs_batched_presets")]
 pub mod presets;
 pub mod solver;
-pub mod solver_old_broken;
 
 #[cfg(feature = "bsgs_batched_presets")]
 use crate::bsgs_batched::presets::BsgsBatchedPresets;
 
 use anyhow::{Context, Result};
-use curve25519_dalek_ng::ristretto::{CompressedRistretto, RistrettoPoint};
-use curve25519_dalek_ng::scalar::Scalar;
+use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
+use curve25519_dalek::scalar::Scalar;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "serde")]

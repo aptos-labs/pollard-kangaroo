@@ -2,8 +2,8 @@ use crate::bsgs::BabyGiant;
 use crate::utils;
 
 use anyhow::Result;
-use curve25519_dalek_ng::ristretto::RistrettoPoint;
-use curve25519_dalek_ng::traits::Identity;
+use curve25519_dalek::ristretto::RistrettoPoint;
+use curve25519_dalek::traits::Identity;
 use std::ops::Add;
 use web_time::{Duration, Instant};
 
@@ -43,7 +43,7 @@ impl BabyGiant {
 
                 // Verify the result (optional but good for debugging)
                 debug_assert!({
-                    let computed = curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT
+                    let computed = curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT
                         * utils::u64_to_scalar(x);
                     computed.eq(pk)
                 });

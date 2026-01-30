@@ -1,5 +1,5 @@
-use curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek_ng::scalar::Scalar;
+use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+use curve25519_dalek::scalar::Scalar;
 use pollard_kangaroo::bsgs::presets::BsgsPresets;
 use pollard_kangaroo::bsgs::BabyGiant;
 use pollard_kangaroo::bsgs_batched::presets::BsgsBatchedPresets;
@@ -83,11 +83,12 @@ fn bsgs_batched_solves_32_bit_dl_k1024() {
 }
 
 /// Test BSGS-k with secrets that are multiples of m (65536).
-/// These secrets cause gamma to hit the identity point during giant steps,
-/// which would panic in double_and_compress_batch without proper handling.
+/// These secrets cause gamma to hit the identity point during giant steps.
 ///
 /// For secret x = m * i, at giant step i:
 ///   gamma = g^x * (g^(-m))^i = g^(m*i) * g^(-m*i) = g^0 = identity
+///
+/// The curve25519-dalek library handles identity correctly in double_and_compress_batch.
 #[test]
 fn bsgs_batched_handles_identity_point_secrets() {
     let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
@@ -121,21 +122,4 @@ fn bsgs_batched_handles_identity_point_secrets() {
             );
         }
     }
-}
-
-/// Confirm that the OLD broken code panics on identity point secrets.
-/// This test uses should_panic to verify the bug existed.
-#[test]
-#[should_panic(expected = "assertion `left == right` failed")]
-fn bsgs_batched_old_code_panics_on_identity() {
-    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
-
-    // m = 2^16 = 65536; secret = m causes identity at giant step 1
-    let m: u64 = 65536;
-    let secret = m;
-    let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
-
-    // This should panic because the old code doesn't handle identity points
-    // Use k=2 so we include the identity point in a batch (step 0 is pk, step 1 is identity)
-    let _ = bsgs32.solve_dlp_old_broken(&pk, 2);
 }

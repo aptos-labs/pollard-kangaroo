@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use core::ops::Mul;
-use curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek_ng::ristretto::RistrettoPoint;
-use curve25519_dalek_ng::scalar::Scalar;
+use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+use curve25519_dalek::ristretto::RistrettoPoint;
+use curve25519_dalek::scalar::Scalar;
 use rand_core::{OsRng, RngCore};
 
 /// Generates a random scalar with the specified number of bits.
@@ -20,7 +20,7 @@ pub fn generate_random_scalar(bits: u8) -> Result<Scalar> {
         key[last_byte - 1] &= (1 << (bits & 0x07)) - 1;
     }
 
-    Scalar::from_canonical_bytes(key).context("failed to construct scalar")
+    Option::from(Scalar::from_canonical_bytes(key)).context("failed to construct scalar")
 }
 
 /// Converts a scalar to an u64.
