@@ -1,6 +1,6 @@
 //! Generic tests for all DLog solver implementations.
 //!
-//! This module tests all DLog algorithms (Kangaroo, BSGS, BSGS-k) using the
+//! This module tests all DLog algorithms ([BL12], BSGS, BSGS-k) using the
 //! `DlogSolver` trait. For each algorithm, we test bit sizes from 1 to 7,
 //! verifying that the algorithm correctly solves DLog for all values in [0, 2^ℓ).
 
@@ -97,6 +97,6 @@ generate_dlog_tests!(
     bsgs_batched_k256_tests
 );
 
-// Generate tests for Kangaroo
-#[cfg(feature = "kangaroo")]
-generate_dlog_tests!(pollard_kangaroo::kangaroo::Kangaroo, kangaroo_tests);
+// Generate tests for [BL12]
+#[cfg(feature = "bl12")]
+generate_dlog_tests!(pollard_kangaroo::bl12::Bl12, bl12_tests);

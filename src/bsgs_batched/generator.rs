@@ -1,4 +1,4 @@
-use crate::bsgs_batched::{BsgsBatchedParameters, BsgsBatchedTable};
+use super::{BsgsBatchedParameters, BsgsBatchedTable};
 
 use anyhow::Result;
 use curve25519_dalek::{

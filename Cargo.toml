@@ -4,17 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["kangaroo", "bsgs", "bsgs_batched", "table16", "table32", "table48", "bsgs_table32", "bsgs_batched_table32"]
+default = ["bl12", "bsgs", "bsgs_batched", "table16", "table32", "table48", "bsgs_table32", "bsgs_batched_table32"]
 serde = ["dep:serde", "dep:serde_with"]
 presets = ["serde", "dep:bincode"]
 # Algorithm features - can be disabled to reduce WASM size
-kangaroo = []
+bl12 = []
 bsgs = []
 bsgs_batched = []
-# Kangaroo precomputed table features
-table16 = ["kangaroo", "presets"]
-table32 = ["kangaroo", "presets"]
-table48 = ["kangaroo", "presets"]
+# [BL12] precomputed table features
+table16 = ["bl12", "presets"]
+table32 = ["bl12", "presets"]
+table48 = ["bl12", "presets"]
 # BSGS precomputed table features
 bsgs_presets = ["bsgs", "serde", "dep:bincode"]
 bsgs_table32 = ["bsgs_presets"]

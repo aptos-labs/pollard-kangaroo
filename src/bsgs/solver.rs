@@ -1,4 +1,4 @@
-use crate::bsgs::BabyGiant;
+use super::BabyGiant;
 use crate::utils;
 
 use anyhow::Result;

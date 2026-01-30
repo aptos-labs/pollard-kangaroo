@@ -1,4 +1,4 @@
-use crate::bsgs::{BsgsParameters, BsgsTable};
+use super::{BsgsParameters, BsgsTable};
 
 use anyhow::Result;
 use curve25519_dalek::{

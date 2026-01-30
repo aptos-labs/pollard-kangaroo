@@ -1,4 +1,4 @@
-use crate::bsgs_batched::BabyGiantBatched;
+use super::BabyGiantBatched;
 
 use anyhow::Result;
 use curve25519_dalek::ristretto::RistrettoPoint;

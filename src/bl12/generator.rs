@@ -1,4 +1,4 @@
-use crate::kangaroo::{self, Parameters, Table};
+use super::{hash, is_distinguished, Parameters, Table};
 use crate::utils;
 
 use anyhow::{Context, Result};
@@ -37,13 +37,13 @@ impl Table {
             for _ in 0..parameters.i * parameters.W {
                 let w_compressed = w.compress();
 
-                if kangaroo::is_distinguished(&w_compressed, parameters) {
+                if is_distinguished(&w_compressed, parameters) {
                     table.insert(w_compressed, wlog);
 
                     break;
                 }
 
-                let h = kangaroo::hash(&w_compressed, parameters) as usize;
+                let h = hash(&w_compressed, parameters) as usize;
 
                 wlog.add_assign(slog[h]);
                 w.add_assign(s[h]);

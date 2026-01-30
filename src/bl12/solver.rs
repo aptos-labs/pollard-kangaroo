@@ -1,4 +1,4 @@
-use crate::kangaroo::{self, Kangaroo};
+use super::{hash, is_distinguished, Bl12};
 use crate::utils;
 
 use anyhow::{Context, Result};
@@ -7,7 +7,7 @@ use curve25519_dalek::{constants::RISTRETTO_BASEPOINT_POINT, ristretto::Ristrett
 use std::ops::{Add, AddAssign, Mul, Sub};
 use web_time::{Duration, Instant};
 
-impl Kangaroo {
+impl Bl12 {
     pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<Option<u64>> {
         if pk.eq(&RistrettoPoint::identity()) {
             return Ok(Some(0));
@@ -27,7 +27,7 @@ impl Kangaroo {
             for _ in 0..self.parameters.i * self.parameters.W {
                 let w_compressed = w.compress();
 
-                if kangaroo::is_distinguished(&w_compressed, &self.parameters) {
+                if is_distinguished(&w_compressed, &self.parameters) {
                     if let Some(value) = self.table.table.get(&w_compressed) {
                         // value * G = sk * G + wdist * G => sk = value - wdist
                         let sk = value.sub(wdist);
@@ -46,7 +46,7 @@ impl Kangaroo {
                     }
                 }
 
-                let h = kangaroo::hash(&w_compressed, &self.parameters) as usize;
+                let h = hash(&w_compressed, &self.parameters) as usize;
 
                 wdist.add_assign(&self.table.slog[h]);
                 w.add_assign(&self.table.s[h]);

@@ -6,7 +6,7 @@ pub mod presets;
 pub mod solver;
 
 #[cfg(feature = "presets")]
-use crate::kangaroo::presets::Presets;
+use crate::bl12::presets::Presets;
 
 use anyhow::{Context, Result};
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
@@ -17,8 +17,13 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 
+/// [BL12] discrete logarithm solver.
+///
+/// Implements the algorithm from "Computing small discrete logarithms faster"
+/// by Daniel J. Bernstein and Tanja Lange (2012).
+/// https://cr.yp.to/dlog/cuberoot-20120919.pdf
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Kangaroo {
+pub struct Bl12 {
     pub parameters: Parameters,
     pub table: Table,
 }
@@ -66,32 +71,34 @@ pub struct Parameters {
     pub secret_size: u8,
 }
 
-impl Kangaroo {
-    pub fn from_parameters(parameters: Parameters) -> Result<Kangaroo> {
+impl Bl12 {
+    pub fn from_parameters(parameters: Parameters) -> Result<Bl12> {
         let table = Table::generate(&parameters).context("failed to generate table")?;
 
-        Ok(Kangaroo { parameters, table })
+        Ok(Bl12 { parameters, table })
     }
 
     #[cfg(feature = "presets")]
-    pub fn from_preset(preset: Presets) -> Result<Kangaroo> {
-        let kangaroo_bytes = match preset {
+    pub fn from_preset(preset: Presets) -> Result<Bl12> {
+        let bl12_bytes = match preset {
             #[cfg(feature = "table16")]
-            Presets::Kangaroo16 => presets::KANGAROO_16,
+            Presets::Bl12_16 => presets::BL12_16,
             #[cfg(feature = "table32")]
-            Presets::Kangaroo32 => presets::KANGAROO_32,
+            Presets::Bl12_32 => presets::BL12_32,
             #[cfg(feature = "table48")]
-            Presets::Kangaroo48 => presets::KANGAROO_48,
+            Presets::Bl12_48 => presets::BL12_48,
         };
 
-        let kangaroo: Kangaroo =
-            bincode::deserialize(kangaroo_bytes).context("failed to deserialize table")?;
+        let bl12: Bl12 = bincode::deserialize(bl12_bytes).context("failed to deserialize table")?;
 
-        Ok(kangaroo)
+        Ok(bl12)
     }
 }
 
-fn is_distinguished(compressed_point: &CompressedRistretto, parameters: &Parameters) -> bool {
+pub(crate) fn is_distinguished(
+    compressed_point: &CompressedRistretto,
+    parameters: &Parameters,
+) -> bool {
     let point_bytes = get_last_point_bytes(compressed_point);
 
     (point_bytes & (parameters.W - 1)) == 0
@@ -102,7 +109,7 @@ fn is_distinguished(compressed_point: &CompressedRistretto, parameters: &Paramet
 ///
 /// Note: it does not perform hashing. However, in the original reference implementation authors
 /// (Daniel J. Bernstein and Tanja Lange) use exactly the same name.
-fn hash(compressed_point: &CompressedRistretto, parameters: &Parameters) -> u64 {
+pub(crate) fn hash(compressed_point: &CompressedRistretto, parameters: &Parameters) -> u64 {
     let point_bytes = get_last_point_bytes(compressed_point);
 
     point_bytes & (parameters.R - 1)
@@ -114,7 +121,7 @@ fn get_last_point_bytes(compressed_point: &CompressedRistretto) -> u64 {
     u64::from_be_bytes(point_bytes.try_into().unwrap())
 }
 
-impl crate::DlogSolver for Kangaroo {
+impl crate::DlogSolver for Bl12 {
     fn new(secret_bits: u8) -> Result<Self> {
         // Generate reasonable parameters based on secret_bits
         // These are heuristics based on the existing presets

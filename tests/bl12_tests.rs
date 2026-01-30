@@ -1,42 +1,42 @@
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::scalar::Scalar;
+use pollard_kangaroo::bl12::presets::Presets;
+use pollard_kangaroo::bl12::Bl12;
 use pollard_kangaroo::bsgs::presets::BsgsPresets;
 use pollard_kangaroo::bsgs::BabyGiant;
 use pollard_kangaroo::bsgs_batched::presets::BsgsBatchedPresets;
 use pollard_kangaroo::bsgs_batched::BabyGiantBatched;
-use pollard_kangaroo::kangaroo::presets::Presets;
-use pollard_kangaroo::kangaroo::Kangaroo;
 use pollard_kangaroo::utils;
 use std::ops::Mul;
 
 #[test]
 fn it_solves_16_bit_dl() {
-    let kangaroo16 = Kangaroo::from_preset(Presets::Kangaroo16).unwrap();
+    let bl12_16 = Bl12::from_preset(Presets::Bl12_16).unwrap();
 
     let (sk, pk) = utils::generate_keypair(16).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(kangaroo16.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bl12_16.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
 }
 
 #[test]
 fn it_solves_32_bit_dl() {
-    let kangaroo32 = Kangaroo::from_preset(Presets::Kangaroo32).unwrap();
+    let bl12_32 = Bl12::from_preset(Presets::Bl12_32).unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(kangaroo32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bl12_32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
 }
 
 #[test]
 fn it_solves_48_bit_dl() {
-    let kangaroo48 = Kangaroo::from_preset(Presets::Kangaroo48).unwrap();
+    let bl12_48 = Bl12::from_preset(Presets::Bl12_48).unwrap();
 
     let (sk, pk) = utils::generate_keypair(48).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(kangaroo48.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bl12_48.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
 }
 
 #[test]

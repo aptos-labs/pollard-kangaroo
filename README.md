@@ -1,5 +1,15 @@
-# pollard-kangaroo
+# Discrete log algorithms
 
-See reference documentation:
-- original algorithm explanation: [cuberoot-20120919.pdf](reference/cuberoot-20120919.pdf)
-- our research paper of the algorithm: [kangaroo_plus_testing.pdf](reference/kangaroo_plus_testing.pdf)
+This crate implements several algorithms for computing discrete logarithms on 32-bit values:
+
+- **[BL12]** - Bernstein-Lange 2012 algorithm 
+- **BSGS** - Baby-step giant-step algorithm
+- **BSGS-k** - A variant of BSGS that uses `double_and_compress_batch` for better performance
+
+ > [!WARNING]
+ > The `pollard-kangaroo` crate name is very unfortunate, since it has almost nothing to do with the implemented algorithms: While [BL12] is a kangaroo-like algorithm, it's not actually the Pollard kangaroo algorithm.
+
+## Useful references
+
+ - [Original \[BL12\] paper](docs/cuberoot-20120919.pdf)
+ - Distributed Lab's [paper on its implementation](docs/kangaroo_plus_testing.pdf)
