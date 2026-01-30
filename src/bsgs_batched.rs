@@ -10,6 +10,7 @@ pub mod generator;
 #[cfg(feature = "bsgs_batched_presets")]
 pub mod presets;
 pub mod solver;
+pub mod solver_old_broken;
 
 #[cfg(feature = "bsgs_batched_presets")]
 use crate::bsgs_batched::presets::BsgsBatchedPresets;
