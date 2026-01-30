@@ -31,7 +31,7 @@ fn main() -> Result<()> {
     println!("This will take some time (random walks to find distinguished points)...");
 
     let start = std::time::Instant::now();
-    let bl12 = Bl12::new_and_compute_table(bits).context("failed to generate BL12 table")?;
+    let bl12 = Bl12::new_and_compute_table(bits);
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());

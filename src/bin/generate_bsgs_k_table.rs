@@ -36,8 +36,7 @@ fn main() -> Result<()> {
 
     let start = std::time::Instant::now();
     // Use K=64 for table generation (K doesn't affect the table, only solving)
-    let bsgs = BabyStepGiantStepK::<64>::new_and_compute_table(bits)
-        .context("failed to generate BSGS-k table")?;
+    let bsgs = BabyStepGiantStepK::<64>::new_and_compute_table(bits);
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());

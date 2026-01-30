@@ -93,10 +93,12 @@ impl NaiveLookupTable {
     /// Generates the lookup table.
     ///
     /// Computes iG for i = 0, 1, ..., 2^max_num_bits - 1 and stores (compressed(iG) -> i).
-    pub fn generate(max_num_bits: u8) -> Result<NaiveLookupTable> {
-        if max_num_bits < 1 || max_num_bits > 32 {
-            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 32"));
-        }
+    pub fn generate(max_num_bits: u8) -> NaiveLookupTable {
+        assert!(
+            max_num_bits >= 1 && max_num_bits <= 32,
+            "max_num_bits must be between 1 and 32, got {}",
+            max_num_bits
+        );
 
         let n: u64 = 1 << max_num_bits;
 
@@ -113,17 +115,17 @@ impl NaiveLookupTable {
             lookup.insert(current.compress(), i);
         }
 
-        Ok(NaiveLookupTable {
+        NaiveLookupTable {
             max_num_bits,
             lookup,
-        })
+        }
     }
 }
 
 impl crate::DlogSolver for NaiveLookup {
-    fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
-        let table = NaiveLookupTable::generate(max_num_bits).context("failed to generate table")?;
-        Ok(NaiveLookup { table })
+    fn new_and_compute_table(max_num_bits: u8) -> Self {
+        let table = NaiveLookupTable::generate(max_num_bits);
+        NaiveLookup { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
@@ -143,7 +145,7 @@ mod tests {
 
     #[test]
     fn naive_handles_identity_point() {
-        let naive = NaiveLookup::new_and_compute_table(8).unwrap();
+        let naive = NaiveLookup::new_and_compute_table(8);
 
         // 0*G = identity
         let identity = RistrettoPoint::identity();
@@ -153,7 +155,7 @@ mod tests {
 
     #[test]
     fn naive_handles_generator() {
-        let naive = NaiveLookup::new_and_compute_table(8).unwrap();
+        let naive = NaiveLookup::new_and_compute_table(8);
 
         // 1*G = generator
         let result = naive.solve(&RISTRETTO_BASEPOINT_POINT).unwrap();
@@ -162,7 +164,7 @@ mod tests {
 
     #[test]
     fn naive_handles_small_values() {
-        let naive = NaiveLookup::new_and_compute_table(8).unwrap();
+        let naive = NaiveLookup::new_and_compute_table(8);
 
         for i in 0..=255u64 {
             let pk = RISTRETTO_BASEPOINT_POINT.mul(crate::utils::u64_to_scalar(i));

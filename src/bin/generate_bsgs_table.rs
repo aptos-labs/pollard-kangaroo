@@ -35,8 +35,7 @@ fn main() -> Result<()> {
     println!("This will take some time...");
 
     let start = std::time::Instant::now();
-    let bsgs =
-        BabyStepGiantStep::new_and_compute_table(bits).context("failed to generate BSGS table")?;
+    let bsgs = BabyStepGiantStep::new_and_compute_table(bits);
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());

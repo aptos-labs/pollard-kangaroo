@@ -147,15 +147,17 @@ impl Bl12 {
 }
 
 impl Table {
-    pub fn generate(max_num_bits: u8) -> Result<Table> {
-        if max_num_bits < 1 || max_num_bits > 64 {
-            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
-        }
+    pub fn generate(max_num_bits: u8) -> Table {
+        assert!(
+            max_num_bits >= 1 && max_num_bits <= 64,
+            "max_num_bits must be between 1 and 64, got {}",
+            max_num_bits
+        );
 
         // Generate reasonable parameters based on max_num_bits
         let (i, w, n, r) = Self::params_for_max_num_bits(max_num_bits);
 
-        let (slog, s) = Self::s_values_init(max_num_bits, w, r)?;
+        let (slog, s) = Self::s_values_init(max_num_bits, w, r);
 
         let mut distinguished_points = HashMap::new();
 
@@ -172,7 +174,7 @@ impl Table {
             }
 
             let mut wlog = utils::generate_random_scalar(max_num_bits)
-                .context("failed to generate `wlog` scalar")?;
+                .expect("generate_random_scalar should not fail for valid max_num_bits");
             let mut current = RISTRETTO_BASEPOINT_POINT.mul(wlog);
 
             for _ in 0..i * w {
@@ -190,7 +192,7 @@ impl Table {
             }
         }
 
-        Ok(Table {
+        Table {
             max_num_bits,
             i,
             W: w,
@@ -199,7 +201,7 @@ impl Table {
             s,
             slog,
             distinguished_points,
-        })
+        }
     }
 
     /// Returns (i, W, N, R) parameters for a given max_num_bits.
@@ -247,11 +249,7 @@ impl Table {
         (8, w, n, r)
     }
 
-    fn s_values_init(
-        max_num_bits: u8,
-        w: u64,
-        r: u64,
-    ) -> Result<(Vec<Scalar>, Vec<RistrettoPoint>)> {
+    fn s_values_init(max_num_bits: u8, w: u64, r: u64) -> (Vec<Scalar>, Vec<RistrettoPoint>) {
         // Calculate slog_size: step sizes should allow walks to cover the search space
         // in roughly W steps (the expected distance between distinguished points).
         let slog_size = if max_num_bits < 8 {
@@ -272,7 +270,7 @@ impl Table {
         for _ in 0..r {
             // Generate step size in range [1, 2^slog_size] to ensure non-zero steps
             let random_part = utils::generate_random_scalar(slog_size)
-                .context("failed to generate `slog` scalar")?;
+                .expect("generate_random_scalar should not fail for valid slog_size");
             let slog = random_part + Scalar::ONE;
 
             let s = RISTRETTO_BASEPOINT_POINT.mul(slog);
@@ -281,7 +279,7 @@ impl Table {
             points.push(s);
         }
 
-        Ok((scalars, points))
+        (scalars, points)
     }
 
     /// Checks if a point is distinguished based on this table's W parameter.
@@ -317,9 +315,9 @@ impl Table {
 }
 
 impl crate::DlogSolver for Bl12 {
-    fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
-        let table = Table::generate(max_num_bits).context("failed to generate table")?;
-        Ok(Bl12 { table })
+    fn new_and_compute_table(max_num_bits: u8) -> Self {
+        let table = Table::generate(max_num_bits);
+        Bl12 { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {

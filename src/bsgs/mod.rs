@@ -122,10 +122,12 @@ impl BabyStepGiantStepTable {
     ///
     /// Baby step: Compute g^j for j = 0, 1, ..., m-1 and store in a hash table.
     /// Also precompute g^(-m) for the giant step phase.
-    pub fn generate(max_num_bits: u8) -> Result<BabyStepGiantStepTable> {
-        if max_num_bits < 1 || max_num_bits > 64 {
-            return Err(anyhow::anyhow!("max_num_bits must be between 1 and 64"));
-        }
+    pub fn generate(max_num_bits: u8) -> BabyStepGiantStepTable {
+        assert!(
+            max_num_bits >= 1 && max_num_bits <= 64,
+            "max_num_bits must be between 1 and 64, got {}",
+            max_num_bits
+        );
 
         // m = ceil(sqrt(2^max_num_bits)) = 2^(ceil(max_num_bits/2))
         let m: u64 = 1 << ((max_num_bits + 1) / 2);
@@ -150,20 +152,19 @@ impl BabyStepGiantStepTable {
         let neg_m = -m_scalar;
         let giant_step = g.mul(neg_m);
 
-        Ok(BabyStepGiantStepTable {
+        BabyStepGiantStepTable {
             max_num_bits,
             m,
             baby_steps,
             giant_step,
-        })
+        }
     }
 }
 
 impl crate::DlogSolver for BabyStepGiantStep {
-    fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
-        let table =
-            BabyStepGiantStepTable::generate(max_num_bits).context("failed to generate table")?;
-        Ok(BabyStepGiantStep { table })
+    fn new_and_compute_table(max_num_bits: u8) -> Self {
+        let table = BabyStepGiantStepTable::generate(max_num_bits);
+        BabyStepGiantStep { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {

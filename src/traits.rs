@@ -14,7 +14,10 @@ pub trait DlogSolver: Sized {
     /// # Arguments
     /// * `max_num_bits` - The number of bits (ℓ). The solver will be able to
     ///   find discrete logs for values < 2^max_num_bits.
-    fn new_and_compute_table(max_num_bits: u8) -> Result<Self>;
+    ///
+    /// # Panics
+    /// Panics if `max_num_bits` is out of the valid range for the algorithm.
+    fn new_and_compute_table(max_num_bits: u8) -> Self;
 
     /// Solves the discrete logarithm problem.
     ///

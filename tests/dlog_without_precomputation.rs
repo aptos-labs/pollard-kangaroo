@@ -12,7 +12,7 @@ mod dlog_without_precomputation {
     /// Tests a DlogSolver implementation for all values in [0, 2^max_num_bits).
     fn test_solver<S: DlogSolver>(max_num_bits: u8) {
         for ell in 1..=max_num_bits {
-            let solver = S::new_and_compute_table(ell).expect("Failed to create solver");
+            let solver = S::new_and_compute_table(ell);
 
             let max_value = 1u64 << ell;
             let g = RISTRETTO_BASEPOINT_POINT;
