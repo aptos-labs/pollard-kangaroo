@@ -33,6 +33,7 @@ web-time = { version = "1.1" }
 
 [dev-dependencies]
 criterion = "0.5"
+rand_chacha = "0.3"
 
 [[bench]]
 name = "dlp_algorithms"

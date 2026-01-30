@@ -5,9 +5,9 @@ use curve25519_dalek::ristretto::RistrettoPoint;
 use curve25519_dalek::scalar::Scalar;
 use rand_core::{OsRng, RngCore};
 
-/// Generates a random scalar with the specified number of bits.
+/// Generates a random scalar with the specified number of bits using the provided RNG.
 /// The returned scalar will be in the range [0, 2^bits).
-pub fn generate_random_scalar(bits: u8) -> Result<Scalar> {
+pub fn generate_random_scalar_with_rng<R: RngCore>(bits: u8, rng: &mut R) -> Result<Scalar> {
     if bits > 64 {
         return Err(anyhow::anyhow!("bits must be less than or equal to 64"));
     }
@@ -15,13 +15,19 @@ pub fn generate_random_scalar(bits: u8) -> Result<Scalar> {
     let mut key = [0u8; 32];
 
     let last_byte = ((bits + 7) >> 3) as usize;
-    OsRng.fill_bytes(&mut key[..last_byte]);
+    rng.fill_bytes(&mut key[..last_byte]);
 
     if bits & 0x07 != 0 {
         key[last_byte - 1] &= (1 << (bits & 0x07)) - 1;
     }
 
     Option::from(Scalar::from_canonical_bytes(key)).context("failed to construct scalar")
+}
+
+/// Generates a random scalar with the specified number of bits.
+/// The returned scalar will be in the range [0, 2^bits).
+pub fn generate_random_scalar(bits: u8) -> Result<Scalar> {
+    generate_random_scalar_with_rng(bits, &mut OsRng)
 }
 
 /// Converts a scalar to a u64. Only valid for scalars < 2^64.
@@ -36,11 +42,19 @@ pub fn u64_to_scalar(value: u64) -> Scalar {
     Scalar::from(value)
 }
 
-/// Generates a random discrete log instance: a scalar x and the point g^x.
-pub fn generate_dlog_instance(bits: u8) -> Result<(Scalar, RistrettoPoint)> {
-    let sk = generate_random_scalar(bits).context("failed to generate secret")?;
+/// Generates a random discrete log instance using the provided RNG: a scalar x and the point g^x.
+pub fn generate_dlog_instance_with_rng<R: RngCore>(
+    bits: u8,
+    rng: &mut R,
+) -> Result<(Scalar, RistrettoPoint)> {
+    let sk = generate_random_scalar_with_rng(bits, rng).context("failed to generate secret")?;
 
     Ok((sk, RISTRETTO_BASEPOINT_POINT.mul(sk)))
+}
+
+/// Generates a random discrete log instance: a scalar x and the point g^x.
+pub fn generate_dlog_instance(bits: u8) -> Result<(Scalar, RistrettoPoint)> {
+    generate_dlog_instance_with_rng(bits, &mut OsRng)
 }
 
 #[cfg(test)]
