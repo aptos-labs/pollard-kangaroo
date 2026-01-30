@@ -1,4 +1,4 @@
-use super::BabyGiant;
+use super::BabyStepGiantStep;
 use crate::utils;
 
 use anyhow::Result;
@@ -7,7 +7,7 @@ use curve25519_dalek::traits::Identity;
 use std::ops::Add;
 use web_time::{Duration, Instant};
 
-impl BabyGiant {
+impl BabyStepGiantStep {
     /// Solves the discrete logarithm problem using Baby-step Giant-step.
     ///
     /// Given pk = g^x, finds x where x is in [0, 2^secret_size).

@@ -3,10 +3,10 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::scalar::Scalar;
 use pollard_kangaroo::bl12::presets::Presets;
 use pollard_kangaroo::bl12::Bl12;
-use pollard_kangaroo::bsgs::presets::BsgsPresets;
-use pollard_kangaroo::bsgs::BabyGiant;
-use pollard_kangaroo::bsgs_k::presets::BsgsKPresets;
-use pollard_kangaroo::bsgs_k::BabyGiantK;
+use pollard_kangaroo::bsgs::presets::BabyStepGiantStepPresets;
+use pollard_kangaroo::bsgs::BabyStepGiantStep;
+use pollard_kangaroo::bsgs_k::presets::BabyStepGiantStepKPresets;
+use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
 use pollard_kangaroo::utils;
 use rand_core::OsRng;
 
@@ -64,7 +64,8 @@ fn bench_point_compression(c: &mut Criterion) {
 }
 
 fn bench_bsgs32(c: &mut Criterion) {
-    let bsgs32 = BabyGiant::from_preset(BsgsPresets::BabyGiant32).unwrap();
+    let bsgs32 =
+        BabyStepGiantStep::from_preset(BabyStepGiantStepPresets::BabyStepGiantStep32).unwrap();
 
     c.bench_function("BSGS 32-bit secrets", |b| {
         b.iter_batched(
@@ -75,50 +76,69 @@ fn bench_bsgs32(c: &mut Criterion) {
     });
 }
 
-fn bench_bsgs_k_32(c: &mut Criterion) {
-    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
-
-    // k values: 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384
-    let k_values: Vec<usize> = (0..=14).map(|exp| 1usize << exp).collect();
-
-    let mut group = c.benchmark_group("BSGS-k 32-bit secrets");
-    group.sample_size(50);
-
-    for k in k_values {
-        group.bench_with_input(BenchmarkId::from_parameter(k), &k, |b, &k| {
-            b.iter_batched(
-                || utils::generate_keypair(32).unwrap(),
-                |(_sk, pk)| bsgs32.solve_dlp(&pk, k, None),
-                BatchSize::SmallInput,
+/// Macro to generate benchmarks for different K values
+macro_rules! bench_bsgs_k {
+    ($name:ident, $k:expr) => {
+        fn $name(c: &mut Criterion) {
+            let bsgs = BabyStepGiantStepK::<$k>::from_preset(
+                BabyStepGiantStepKPresets::BabyStepGiantStep32,
             )
-        });
-    }
+            .unwrap();
 
-    group.finish();
+            c.bench_function(&format!("BSGS-k K={} 32-bit secrets", $k), |b| {
+                b.iter_batched(
+                    || utils::generate_keypair(32).unwrap(),
+                    |(_sk, pk)| bsgs.solve_dlp(&pk, None),
+                    BatchSize::SmallInput,
+                )
+            });
+        }
+    };
 }
 
-fn bench_bsgs_k_32_small_secrets(c: &mut Criterion) {
-    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
+bench_bsgs_k!(bench_bsgs_k_1, 1);
+bench_bsgs_k!(bench_bsgs_k_2, 2);
+bench_bsgs_k!(bench_bsgs_k_4, 4);
+bench_bsgs_k!(bench_bsgs_k_8, 8);
+bench_bsgs_k!(bench_bsgs_k_16, 16);
+bench_bsgs_k!(bench_bsgs_k_32, 32);
+bench_bsgs_k!(bench_bsgs_k_64, 64);
+bench_bsgs_k!(bench_bsgs_k_128, 128);
+bench_bsgs_k!(bench_bsgs_k_256, 256);
+bench_bsgs_k!(bench_bsgs_k_512, 512);
+bench_bsgs_k!(bench_bsgs_k_1024, 1024);
+bench_bsgs_k!(bench_bsgs_k_2048, 2048);
+bench_bsgs_k!(bench_bsgs_k_4096, 4096);
+bench_bsgs_k!(bench_bsgs_k_8192, 8192);
+bench_bsgs_k!(bench_bsgs_k_16384, 16384);
 
-    // k values: 64, 128, 1024, 2048
-    let k_values: Vec<usize> = vec![64, 128, 1024, 2048];
-
-    // Use 18-bit secrets for faster benchmarks (uses 32-bit table)
-    let mut group = c.benchmark_group("BSGS-k 18-bit small secrets (32-bit table)");
-    group.sample_size(100);
-
-    for k in k_values {
-        group.bench_with_input(BenchmarkId::from_parameter(k), &k, |b, &k| {
-            b.iter_batched(
-                || utils::generate_keypair(18).unwrap(),
-                |(_sk, pk)| bsgs32.solve_dlp(&pk, k, None),
-                BatchSize::SmallInput,
+/// Macro to generate benchmarks for different K values with small secrets
+macro_rules! bench_bsgs_k_small {
+    ($name:ident, $k:expr) => {
+        fn $name(c: &mut Criterion) {
+            let bsgs = BabyStepGiantStepK::<$k>::from_preset(
+                BabyStepGiantStepKPresets::BabyStepGiantStep32,
             )
-        });
-    }
+            .unwrap();
 
-    group.finish();
+            c.bench_function(
+                &format!("BSGS-k K={} 18-bit secrets (32-bit table)", $k),
+                |b| {
+                    b.iter_batched(
+                        || utils::generate_keypair(18).unwrap(),
+                        |(_sk, pk)| bsgs.solve_dlp(&pk, None),
+                        BatchSize::SmallInput,
+                    )
+                },
+            );
+        }
+    };
 }
+
+bench_bsgs_k_small!(bench_bsgs_k_small_64, 64);
+bench_bsgs_k_small!(bench_bsgs_k_small_128, 128);
+bench_bsgs_k_small!(bench_bsgs_k_small_1024, 1024);
+bench_bsgs_k_small!(bench_bsgs_k_small_2048, 2048);
 
 criterion_group! {
     name = bl12_16_group;
@@ -145,8 +165,35 @@ criterion_group! {
     config = Criterion::default().sample_size(50);
     targets = bench_bsgs32
 }
-criterion_group!(bsgs_k_32_group, bench_bsgs_k_32);
-criterion_group!(bsgs_k_32_small_group, bench_bsgs_k_32_small_secrets);
+criterion_group! {
+    name = bsgs_k_32_group;
+    config = Criterion::default().sample_size(50);
+    targets =
+        bench_bsgs_k_1,
+        bench_bsgs_k_2,
+        bench_bsgs_k_4,
+        bench_bsgs_k_8,
+        bench_bsgs_k_16,
+        bench_bsgs_k_32,
+        bench_bsgs_k_64,
+        bench_bsgs_k_128,
+        bench_bsgs_k_256,
+        bench_bsgs_k_512,
+        bench_bsgs_k_1024,
+        bench_bsgs_k_2048,
+        bench_bsgs_k_4096,
+        bench_bsgs_k_8192,
+        bench_bsgs_k_16384
+}
+criterion_group! {
+    name = bsgs_k_32_small_group;
+    config = Criterion::default().sample_size(100);
+    targets =
+        bench_bsgs_k_small_64,
+        bench_bsgs_k_small_128,
+        bench_bsgs_k_small_1024,
+        bench_bsgs_k_small_2048
+}
 
 criterion_main!(
     bl12_16_group,

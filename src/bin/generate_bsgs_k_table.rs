@@ -5,7 +5,7 @@
 //! Example: cargo run --bin generate_bsgs_k_table --features serde -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::bsgs_k::{BabyGiantK, BsgsKParameters};
+use pollard_kangaroo::bsgs_k::{BabyStepGiantStepK, BabyStepGiantStepKParameters};
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -33,14 +33,15 @@ fn main() -> Result<()> {
     println!("Table size m = {} (doubled baby steps)", m);
     println!("This will take some time...");
 
-    let parameters = BsgsKParameters {
+    let parameters = BabyStepGiantStepKParameters {
         secret_size: bits,
         m,
     };
 
     let start = std::time::Instant::now();
-    let bsgs =
-        BabyGiantK::from_parameters(parameters).context("failed to generate BSGS-k table")?;
+    // Use K=64 for table generation (K doesn't affect the table, only solving)
+    let bsgs = BabyStepGiantStepK::<64>::from_parameters(parameters)
+        .context("failed to generate BSGS-k table")?;
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());

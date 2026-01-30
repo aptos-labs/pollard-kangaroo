@@ -1,4 +1,4 @@
-use super::BabyGiantK;
+use super::BabyStepGiantStepK;
 
 use anyhow::Result;
 use curve25519_dalek::ristretto::RistrettoPoint;
@@ -6,28 +6,23 @@ use curve25519_dalek::traits::Identity;
 use std::ops::Add;
 use web_time::{Duration, Instant};
 
-impl BabyGiantK {
+impl<const K: usize> BabyStepGiantStepK<K> {
     /// Solves the discrete logarithm problem using BSGS-k.
     ///
     /// Given pk = g^x, finds x where x is in [0, 2^secret_size).
     ///
-    /// The parameter `k` controls the batch size: we accumulate k points before
-    /// calling `double_and_compress_batch`. Larger k amortizes the compression
+    /// The const generic parameter `K` controls the batch size: we accumulate K points
+    /// before calling `double_and_compress_batch`. Larger K amortizes the compression
     /// cost better but uses more memory and may do extra work if the answer
     /// is found mid-batch.
     ///
     /// Algorithm:
-    /// 1. Accumulate k points: gamma_0, gamma_1, ..., gamma_{k-1}
+    /// 1. Accumulate K points: gamma_0, gamma_1, ..., gamma_{K-1}
     ///    where gamma_i = pk * (g^(-m))^(batch_start + i)
-    /// 2. Call double_and_compress_batch on all k points
+    /// 2. Call double_and_compress_batch on all K points
     /// 3. Check each compressed point against the table of doubled baby steps
     /// 4. If found at position i with value j, then x = (batch_start + i) * m + j
-    pub fn solve_dlp(
-        &self,
-        pk: &RistrettoPoint,
-        k: usize,
-        max_time: Option<u64>,
-    ) -> Result<Option<u64>> {
+    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<Option<u64>> {
         if pk.eq(&RistrettoPoint::identity()) {
             return Ok(Some(0));
         }
@@ -38,7 +33,7 @@ impl BabyGiantK {
         // gamma starts as pk, then we multiply by g^(-m) each iteration
         let mut gamma = *pk;
 
-        // Process in batches of k
+        // Process in batches of K
         let mut batch_start: u64 = 0;
 
         while batch_start < m {
@@ -50,7 +45,7 @@ impl BabyGiantK {
 
             // Determine actual batch size (may be smaller for last batch)
             let remaining = (m - batch_start) as usize;
-            let batch_size = k.min(remaining);
+            let batch_size = K.min(remaining);
 
             // Accumulate batch_size points
             let mut batch_points = Vec::with_capacity(batch_size);

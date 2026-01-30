@@ -1,12 +1,12 @@
-use crate::bsgs::BsgsParameters;
+use super::BabyStepGiantStepParameters;
 
-pub enum BsgsPresets {
+pub enum BabyStepGiantStepPresets {
     #[cfg(feature = "bsgs_table32")]
-    BabyGiant32,
+    BabyStepGiantStep32,
 }
 
 #[cfg(feature = "bsgs_table32")]
-pub const PARAMETERS_32: BsgsParameters = BsgsParameters {
+pub const PARAMETERS_32: BabyStepGiantStepParameters = BabyStepGiantStepParameters {
     secret_size: 32,
     // m = ceil(sqrt(2^32)) = 2^16 = 65536
     m: 65536,

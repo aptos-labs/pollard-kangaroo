@@ -2,10 +2,10 @@ use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::scalar::Scalar;
 use pollard_kangaroo::bl12::presets::Presets;
 use pollard_kangaroo::bl12::Bl12;
-use pollard_kangaroo::bsgs::presets::BsgsPresets;
-use pollard_kangaroo::bsgs::BabyGiant;
-use pollard_kangaroo::bsgs_k::presets::BsgsKPresets;
-use pollard_kangaroo::bsgs_k::BabyGiantK;
+use pollard_kangaroo::bsgs::presets::BabyStepGiantStepPresets;
+use pollard_kangaroo::bsgs::BabyStepGiantStep;
+use pollard_kangaroo::bsgs_k::presets::BabyStepGiantStepKPresets;
+use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
 use pollard_kangaroo::utils;
 use std::ops::Mul;
 
@@ -41,7 +41,8 @@ fn it_solves_48_bit_dl() {
 
 #[test]
 fn bsgs_solves_32_bit_dl() {
-    let bsgs32 = BabyGiant::from_preset(BsgsPresets::BabyGiant32).unwrap();
+    let bsgs32 =
+        BabyStepGiantStep::from_preset(BabyStepGiantStepPresets::BabyStepGiantStep32).unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
@@ -51,35 +52,38 @@ fn bsgs_solves_32_bit_dl() {
 
 #[test]
 fn bsgs_k_solves_32_bit_dl_k64() {
-    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
+    let bsgs32 =
+        BabyStepGiantStepK::<64>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
+            .unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    // Test with k=64
-    assert_eq!(bsgs32.solve_dlp(&pk, 64, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
 }
 
 #[test]
 fn bsgs_k_solves_32_bit_dl_k256() {
-    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
+    let bsgs32 =
+        BabyStepGiantStepK::<256>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
+            .unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    // Test with k=256
-    assert_eq!(bsgs32.solve_dlp(&pk, 256, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
 }
 
 #[test]
 fn bsgs_k_solves_32_bit_dl_k1024() {
-    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
+    let bsgs32 =
+        BabyStepGiantStepK::<1024>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
+            .unwrap();
 
     let (sk, pk) = utils::generate_keypair(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    // Test with k=1024
-    assert_eq!(bsgs32.solve_dlp(&pk, 1024, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
 }
 
 /// Test BSGS-k with secrets that are multiples of m (65536).
@@ -91,8 +95,6 @@ fn bsgs_k_solves_32_bit_dl_k1024() {
 /// The curve25519-dalek library handles identity correctly in double_and_compress_batch.
 #[test]
 fn bsgs_k_handles_identity_point_secrets() {
-    let bsgs32 = BabyGiantK::from_preset(BsgsKPresets::BabyGiantK32).unwrap();
-
     // m = 2^16 = 65536 for 32-bit table
     let m: u64 = 65536;
 
@@ -107,19 +109,35 @@ fn bsgs_k_handles_identity_point_secrets() {
         2 * m + 100, // offset from multiple
     ];
 
+    // Test with K=64
+    let bsgs64 =
+        BabyStepGiantStepK::<64>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
+            .unwrap();
+
     for &secret in &problematic_secrets {
         let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
+        let result = bsgs64.solve_dlp(&pk, None).unwrap();
+        assert_eq!(
+            result,
+            Some(secret),
+            "Failed for secret={} with K=64",
+            secret
+        );
+    }
 
-        // Test with various k values
-        for k in [1, 2, 4, 64, 256] {
-            let result = bsgs32.solve_dlp(&pk, k, None).unwrap();
-            assert_eq!(
-                result,
-                Some(secret),
-                "Failed for secret={} with k={}",
-                secret,
-                k
-            );
-        }
+    // Test with K=256
+    let bsgs256 =
+        BabyStepGiantStepK::<256>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
+            .unwrap();
+
+    for &secret in &problematic_secrets {
+        let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
+        let result = bsgs256.solve_dlp(&pk, None).unwrap();
+        assert_eq!(
+            result,
+            Some(secret),
+            "Failed for secret={} with K=256",
+            secret
+        );
     }
 }

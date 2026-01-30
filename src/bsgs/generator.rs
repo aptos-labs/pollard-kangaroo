@@ -1,4 +1,4 @@
-use super::{BsgsParameters, BsgsTable};
+use super::{BabyStepGiantStepParameters, BabyStepGiantStepTable};
 
 use anyhow::Result;
 use curve25519_dalek::{
@@ -7,12 +7,12 @@ use curve25519_dalek::{
 use std::collections::HashMap;
 use std::ops::Mul;
 
-impl BsgsTable {
+impl BabyStepGiantStepTable {
     /// Generates the BSGS table with baby steps.
     ///
     /// Baby step: Compute g^j for j = 0, 1, ..., m-1 and store in a hash table.
     /// Also precompute g^(-m) for the giant step phase.
-    pub fn generate(parameters: &BsgsParameters) -> Result<BsgsTable> {
+    pub fn generate(parameters: &BabyStepGiantStepParameters) -> Result<BabyStepGiantStepTable> {
         if parameters.secret_size < 1 || parameters.secret_size > 64 {
             return Err(anyhow::anyhow!("secret size must be between 1 and 64"));
         }
@@ -39,7 +39,7 @@ impl BsgsTable {
         let neg_m = -m_scalar;
         let giant_step = g.mul(neg_m);
 
-        Ok(BsgsTable {
+        Ok(BabyStepGiantStepTable {
             baby_steps,
             giant_step,
             neg_m,

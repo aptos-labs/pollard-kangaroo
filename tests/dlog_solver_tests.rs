@@ -81,16 +81,19 @@ macro_rules! generate_dlog_tests {
 
 // Generate tests for BSGS (fastest algorithm)
 #[cfg(feature = "bsgs")]
-generate_dlog_tests!(pollard_kangaroo::bsgs::BabyGiant, bsgs_tests);
+generate_dlog_tests!(pollard_kangaroo::bsgs::BabyStepGiantStep, bsgs_tests);
 
 // Generate tests for BSGS-k with K=64
 #[cfg(feature = "bsgs_k")]
-generate_dlog_tests!(pollard_kangaroo::bsgs_k::BabyGiantKK<64>, bsgs_k_k64_tests);
+generate_dlog_tests!(
+    pollard_kangaroo::bsgs_k::BabyStepGiantStepK<64>,
+    bsgs_k_k64_tests
+);
 
 // Generate tests for BSGS-k with K=256
 #[cfg(feature = "bsgs_k")]
 generate_dlog_tests!(
-    pollard_kangaroo::bsgs_k::BabyGiantKK<256>,
+    pollard_kangaroo::bsgs_k::BabyStepGiantStepK<256>,
     bsgs_k_k256_tests
 );
 
