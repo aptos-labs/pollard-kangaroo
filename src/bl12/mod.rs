@@ -94,6 +94,8 @@ impl Bl12 {
     /// Solves the discrete log problem using the provided RNG.
     ///
     /// This is useful for deterministic testing when a seeded RNG is provided.
+    ///
+    /// TODO: I wonder if a similar trick as in BSGS-k with `double_and_compress_batch` can be used here too.
     pub fn solve_dlp_with_rng<R: rand_core::RngCore>(
         &self,
         pk: &RistrettoPoint,
