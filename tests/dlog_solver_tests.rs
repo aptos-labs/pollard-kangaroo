@@ -20,10 +20,7 @@ fn test_all_values<S: DlogSolver>(max_num_bits: u8) {
     let mut pk = RistrettoPoint::default(); // identity
 
     for x in 0..max_value {
-        let result = solver
-            .solve(&pk)
-            .expect("Solver returned error")
-            .expect("Solver returned None");
+        let result = solver.solve(&pk).expect("Solver returned error");
 
         assert_eq!(
             result, x,

@@ -16,7 +16,7 @@ fn it_solves_16_bit_dl() {
     let (sk, pk) = utils::generate_dlog_instance(16).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bl12_16.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bl12_16.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 #[test]
@@ -26,7 +26,7 @@ fn it_solves_32_bit_dl() {
     let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bl12_32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bl12_32.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 #[test]
@@ -36,7 +36,7 @@ fn it_solves_48_bit_dl() {
     let (sk, pk) = utils::generate_dlog_instance(48).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bl12_48.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bl12_48.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn bsgs_solves_32_bit_dl() {
     let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 #[test]
@@ -59,7 +59,7 @@ fn bsgs_k_solves_32_bit_dl_k64() {
     let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 #[test]
@@ -71,7 +71,7 @@ fn bsgs_k_solves_32_bit_dl_k256() {
     let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn bsgs_k_solves_32_bit_dl_k1024() {
     let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
-    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
+    assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
 }
 
 /// Test BSGS-k with secrets that are multiples of m (65536).
@@ -117,12 +117,7 @@ fn bsgs_k_handles_identity_point_secrets() {
     for &secret in &problematic_secrets {
         let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
         let result = bsgs64.solve_dlp(&pk, None).unwrap();
-        assert_eq!(
-            result,
-            Some(secret),
-            "Failed for secret={} with K=64",
-            secret
-        );
+        assert_eq!(result, secret, "Failed for secret={} with K=64", secret);
     }
 
     // Test with K=256
@@ -133,11 +128,6 @@ fn bsgs_k_handles_identity_point_secrets() {
     for &secret in &problematic_secrets {
         let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
         let result = bsgs256.solve_dlp(&pk, None).unwrap();
-        assert_eq!(
-            result,
-            Some(secret),
-            "Failed for secret={} with K=256",
-            secret
-        );
+        assert_eq!(result, secret, "Failed for secret={} with K=256", secret);
     }
 }

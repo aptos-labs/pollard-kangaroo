@@ -24,11 +24,9 @@ pub trait DlogSolver: Sized {
     /// * `pk` - The public key (g^x) to solve the DLog for.
     ///
     /// # Returns
-    /// * `Ok(Some(x))` - The discrete log if found.
-    /// * `Ok(None)` - If no solution exists in the valid range.
-    /// * `Err(_)` - On error.
-    /// TODO: why are you returning a Result<Option<>> instead of a Result<>? Fix please.
-    fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>>;
+    /// * `Ok(x)` - The discrete log.
+    /// * `Err(_)` - If no solution exists in the valid range, or on error.
+    fn solve(&self, pk: &RistrettoPoint) -> Result<u64>;
 
     /// Returns the maximum number of bits this solver can handle.
     fn max_num_bits(&self) -> u8;

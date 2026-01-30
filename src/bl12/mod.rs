@@ -103,9 +103,9 @@ impl Bl12 {
         Ok(bl12)
     }
 
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<Option<u64>> {
+    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
         if pk.eq(&RistrettoPoint::identity()) {
-            return Ok(Some(0));
+            return Ok(0);
         }
 
         let start_time = max_time.map(|_| Instant::now());
@@ -129,7 +129,7 @@ impl Bl12 {
 
                         assert!(RISTRETTO_BASEPOINT_POINT.mul(sk).eq(pk));
 
-                        return Ok(Some(utils::scalar_to_u64(&sk)));
+                        return Ok(utils::scalar_to_u64(&sk));
                     }
 
                     break;
@@ -137,7 +137,7 @@ impl Bl12 {
 
                 if let Some(max_time) = max_time {
                     if start_time.unwrap().elapsed() >= Duration::from_millis(max_time) {
-                        return Ok(None);
+                        return Err(anyhow::anyhow!("timeout exceeded"));
                     }
                 }
 
@@ -270,7 +270,7 @@ impl crate::DlogSolver for Bl12 {
         Self::from_parameters(parameters)
     }
 
-    fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>> {
+    fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
         self.solve_dlp(pk, None)
     }
 

@@ -23,7 +23,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 use std::ops::{Add, Mul};
-use web_time::{Duration, Instant};
 
 /// Defines generated table values for BSGS-k.
 #[cfg_attr(feature = "serde", serde_as)]
@@ -95,12 +94,20 @@ impl<const K: usize> BabyStepGiantStepK<K> {
     /// 2. Call double_and_compress_batch on all K points
     /// 3. Check each compressed point against the table of doubled baby steps
     /// 4. If found at position i with value j, then x = (batch_start + i) * m + j
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<Option<u64>> {
-        if pk.eq(&RistrettoPoint::identity()) {
-            return Ok(Some(0));
+    ///
+    /// Note: `max_time` must be `None`. BSGS-k is deterministic and always terminates
+    /// in bounded time, so timeout is not supported.
+    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
+        if max_time.is_some() {
+            return Err(anyhow::anyhow!(
+                "timeout not supported for BSGS-k (deterministic algorithm)"
+            ));
         }
 
-        let start_time = max_time.map(|_| Instant::now());
+        if pk.eq(&RistrettoPoint::identity()) {
+            return Ok(0);
+        }
+
         let m = self.parameters.m;
 
         // gamma starts as pk, then we multiply by g^(-m) each iteration
@@ -110,12 +117,6 @@ impl<const K: usize> BabyStepGiantStepK<K> {
         let mut batch_start: u64 = 0;
 
         while batch_start < m {
-            if let Some(max_time) = max_time {
-                if start_time.unwrap().elapsed() >= Duration::from_millis(max_time) {
-                    return Ok(None);
-                }
-            }
-
             // Determine actual batch size (may be smaller for last batch)
             let remaining = (m - batch_start) as usize;
             let batch_size = K.min(remaining);
@@ -144,7 +145,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
                         computed.eq(pk)
                     });
 
-                    return Ok(Some(x));
+                    return Ok(x);
                 }
             }
 
@@ -154,7 +155,10 @@ impl<const K: usize> BabyStepGiantStepK<K> {
         }
 
         // No solution found in the range [0, m^2)
-        Ok(None)
+        Err(anyhow::anyhow!(
+            "no solution found in range [0, 2^{})",
+            self.parameters.secret_size
+        ))
     }
 }
 
@@ -219,7 +223,7 @@ impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
         Self::from_parameters(parameters)
     }
 
-    fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>> {
+    fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
         self.solve_dlp(pk, None)
     }
 

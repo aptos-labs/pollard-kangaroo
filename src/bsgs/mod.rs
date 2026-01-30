@@ -20,7 +20,6 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 use std::ops::{Add, Mul};
-use web_time::{Duration, Instant};
 
 /// Baby-step Giant-step algorithm for solving discrete logarithms.
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -80,24 +79,26 @@ impl BabyStepGiantStep {
     /// 1. For i = 0, 1, ..., m-1:
     ///    - Compute gamma = pk * (g^(-m))^i
     ///    - If gamma is in baby_steps table with value j, then x = i*m + j
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<Option<u64>> {
-        if pk.eq(&RistrettoPoint::identity()) {
-            return Ok(Some(0));
+    ///
+    /// Note: `max_time` must be `None`. BSGS is deterministic and always terminates
+    /// in bounded time, so timeout is not supported.
+    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
+        if max_time.is_some() {
+            return Err(anyhow::anyhow!(
+                "timeout not supported for BSGS (deterministic algorithm)"
+            ));
         }
 
-        let start_time = max_time.map(|_| Instant::now());
+        if pk.eq(&RistrettoPoint::identity()) {
+            return Ok(0);
+        }
+
         let m = self.parameters.m;
 
         // gamma starts as pk, then we multiply by g^(-m) each iteration
         let mut gamma = *pk;
 
         for i in 0..m {
-            if let Some(max_time) = max_time {
-                if start_time.unwrap().elapsed() >= Duration::from_millis(max_time) {
-                    return Ok(None);
-                }
-            }
-
             // NOTE: This is the most expensive step, actually!
             let gamma_compressed = gamma.compress();
 
@@ -112,7 +113,7 @@ impl BabyStepGiantStep {
                     computed.eq(pk)
                 });
 
-                return Ok(Some(x));
+                return Ok(x);
             }
 
             // gamma = gamma * g^(-m)
@@ -120,7 +121,10 @@ impl BabyStepGiantStep {
         }
 
         // No solution found in the range [0, m^2)
-        Ok(None)
+        Err(anyhow::anyhow!(
+            "no solution found in range [0, 2^{})",
+            self.parameters.secret_size
+        ))
     }
 }
 
@@ -179,7 +183,7 @@ impl crate::DlogSolver for BabyStepGiantStep {
         Self::from_parameters(parameters)
     }
 
-    fn solve(&self, pk: &RistrettoPoint) -> Result<Option<u64>> {
+    fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
         self.solve_dlp(pk, None)
     }
 
