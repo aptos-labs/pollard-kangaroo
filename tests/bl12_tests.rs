@@ -13,7 +13,7 @@ use std::ops::Mul;
 fn it_solves_16_bit_dl() {
     let bl12_16 = Bl12::from_preset(Presets::Bl12_16).unwrap();
 
-    let (sk, pk) = utils::generate_keypair(16).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(16).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bl12_16.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
@@ -23,7 +23,7 @@ fn it_solves_16_bit_dl() {
 fn it_solves_32_bit_dl() {
     let bl12_32 = Bl12::from_preset(Presets::Bl12_32).unwrap();
 
-    let (sk, pk) = utils::generate_keypair(32).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bl12_32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
@@ -33,7 +33,7 @@ fn it_solves_32_bit_dl() {
 fn it_solves_48_bit_dl() {
     let bl12_48 = Bl12::from_preset(Presets::Bl12_48).unwrap();
 
-    let (sk, pk) = utils::generate_keypair(48).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(48).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bl12_48.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
@@ -44,7 +44,7 @@ fn bsgs_solves_32_bit_dl() {
     let bsgs32 =
         BabyStepGiantStep::from_preset(BabyStepGiantStepPresets::BabyStepGiantStep32).unwrap();
 
-    let (sk, pk) = utils::generate_keypair(32).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
@@ -56,7 +56,7 @@ fn bsgs_k_solves_32_bit_dl_k64() {
         BabyStepGiantStepK::<64>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
             .unwrap();
 
-    let (sk, pk) = utils::generate_keypair(32).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
@@ -68,7 +68,7 @@ fn bsgs_k_solves_32_bit_dl_k256() {
         BabyStepGiantStepK::<256>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
             .unwrap();
 
-    let (sk, pk) = utils::generate_keypair(32).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);
@@ -80,7 +80,7 @@ fn bsgs_k_solves_32_bit_dl_k1024() {
         BabyStepGiantStepK::<1024>::from_preset(BabyStepGiantStepKPresets::BabyStepGiantStep32)
             .unwrap();
 
-    let (sk, pk) = utils::generate_keypair(32).unwrap();
+    let (sk, pk) = utils::generate_dlog_instance(32).unwrap();
     let sk_u64 = utils::scalar_to_u64(&sk);
 
     assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap().unwrap(), sk_u64);

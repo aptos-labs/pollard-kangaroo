@@ -38,9 +38,8 @@ pub fn u64_to_scalar(value: u64) -> Scalar {
     Scalar::from(value)
 }
 
-/// Generates a random scalar and its corresponding "public key".
-/// TODO: rename to generate_dlog_instance
-pub fn generate_keypair(bits: u8) -> Result<(Scalar, RistrettoPoint)> {
+/// Generates a random discrete log instance: a scalar x and the point g^x.
+pub fn generate_dlog_instance(bits: u8) -> Result<(Scalar, RistrettoPoint)> {
     let sk = generate_random_scalar(bits).context("failed to generate secret")?;
 
     Ok((sk, RISTRETTO_BASEPOINT_POINT.mul(sk)))

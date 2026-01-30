@@ -15,7 +15,7 @@ fn bench_bl12_16(c: &mut Criterion) {
 
     c.bench_function("[BL12] 16-bit secrets", |b| {
         b.iter_batched(
-            || utils::generate_keypair(16).unwrap(),
+            || utils::generate_dlog_instance(16).unwrap(),
             |(_sk, pk)| bl12_16.solve_dlp(&pk, None),
             BatchSize::SmallInput,
         )
@@ -27,7 +27,7 @@ fn bench_bl12_32(c: &mut Criterion) {
 
     c.bench_function("[BL12] 32-bit secrets", |b| {
         b.iter_batched(
-            || utils::generate_keypair(32).unwrap(),
+            || utils::generate_dlog_instance(32).unwrap(),
             |(_sk, pk)| bl12_32.solve_dlp(&pk, None),
             BatchSize::SmallInput,
         )
@@ -39,7 +39,7 @@ fn bench_bl12_48(c: &mut Criterion) {
 
     c.bench_function("[BL12] 48-bit secrets", |b| {
         b.iter_batched(
-            || utils::generate_keypair(48).unwrap(),
+            || utils::generate_dlog_instance(48).unwrap(),
             |(_sk, pk)| bl12_48.solve_dlp(&pk, None),
             BatchSize::SmallInput,
         )
@@ -69,7 +69,7 @@ fn bench_bsgs32(c: &mut Criterion) {
 
     c.bench_function("BSGS 32-bit secrets", |b| {
         b.iter_batched(
-            || utils::generate_keypair(32).unwrap(),
+            || utils::generate_dlog_instance(32).unwrap(),
             |(_sk, pk)| bsgs32.solve_dlp(&pk, None),
             BatchSize::SmallInput,
         )
@@ -87,7 +87,7 @@ macro_rules! bench_bsgs_k {
 
             c.bench_function(&format!("BSGS-k K={} 32-bit secrets", $k), |b| {
                 b.iter_batched(
-                    || utils::generate_keypair(32).unwrap(),
+                    || utils::generate_dlog_instance(32).unwrap(),
                     |(_sk, pk)| bsgs.solve_dlp(&pk, None),
                     BatchSize::SmallInput,
                 )
@@ -125,7 +125,7 @@ macro_rules! bench_bsgs_k_small {
                 &format!("BSGS-k K={} 18-bit secrets (32-bit table)", $k),
                 |b| {
                     b.iter_batched(
-                        || utils::generate_keypair(18).unwrap(),
+                        || utils::generate_dlog_instance(18).unwrap(),
                         |(_sk, pk)| bsgs.solve_dlp(&pk, None),
                         BatchSize::SmallInput,
                     )
