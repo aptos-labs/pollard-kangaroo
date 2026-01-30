@@ -1,7 +1,7 @@
 use crate::bsgs_batched::BabyGiantBatched;
 
 use anyhow::Result;
-use curve25519_dalek_ng::ristretto::RistrettoPoint;
+use curve25519_dalek_ng::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek_ng::traits::Identity;
 use std::ops::Add;
 use web_time::{Duration, Instant};
@@ -52,31 +52,49 @@ impl BabyGiantBatched {
             let remaining = (m - batch_start) as usize;
             let batch_size = k.min(remaining);
 
-            // Accumulate batch_size points
+            // Accumulate batch_size points, tracking which indices have identity
             let mut batch_points = Vec::with_capacity(batch_size);
+            let mut identity_indices = Vec::new();
             let mut current_gamma = gamma;
 
-            for _ in 0..batch_size {
-                batch_points.push(current_gamma);
+            for i in 0..batch_size {
+                if current_gamma.eq(&RistrettoPoint::identity()) {
+                    // Track identity points - they can't go through double_and_compress_batch
+                    identity_indices.push(i);
+                } else {
+                    batch_points.push((i, current_gamma));
+                }
                 current_gamma = current_gamma.add(self.table.giant_step);
             }
 
-            // Double and compress all points in the batch
-            let compressed_batch = RistrettoPoint::double_and_compress_batch(&batch_points);
-
-            // Check each compressed point against the table
-            for (i, compressed) in compressed_batch.iter().enumerate() {
-                if let Some(&j) = self.table.baby_steps.get(compressed) {
-                    let x = (batch_start + i as u64) * m + j;
-
-                    // Verify the result (optional but good for debugging)
-                    debug_assert!({
-                        let computed = curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT
-                            * crate::utils::u64_to_scalar(x);
-                        computed.eq(pk)
-                    });
-
+            // Handle identity points first (2*identity = identity)
+            let identity_compressed = CompressedRistretto::identity();
+            for i in &identity_indices {
+                if let Some(&j) = self.table.baby_steps.get(&identity_compressed) {
+                    let x = (batch_start + *i as u64) * m + j;
                     return Ok(Some(x));
+                }
+            }
+
+            // Double and compress non-identity points in the batch
+            if !batch_points.is_empty() {
+                let points_only: Vec<_> = batch_points.iter().map(|(_, p)| *p).collect();
+                let compressed_batch = RistrettoPoint::double_and_compress_batch(&points_only);
+
+                // Check each compressed point against the table
+                for ((i, _), compressed) in batch_points.iter().zip(compressed_batch.iter()) {
+                    if let Some(&j) = self.table.baby_steps.get(compressed) {
+                        let x = (batch_start + *i as u64) * m + j;
+
+                        // Verify the result (optional but good for debugging)
+                        debug_assert!({
+                            let computed = curve25519_dalek_ng::constants::RISTRETTO_BASEPOINT_POINT
+                                * crate::utils::u64_to_scalar(x);
+                            computed.eq(pk)
+                        });
+
+                        return Ok(Some(x));
+                    }
                 }
             }
 

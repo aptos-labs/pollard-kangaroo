@@ -97,6 +97,29 @@ fn bench_bsgs_batched32(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_bsgs_batched32_small_secrets(c: &mut Criterion) {
+    let bsgs32 = BabyGiantBatched::from_preset(BsgsBatchedPresets::BabyGiantBatched32).unwrap();
+
+    // k values: 64, 128, 1024, 2048
+    let k_values: Vec<usize> = vec![64, 128, 1024, 2048];
+
+    // Use 18-bit secrets for faster benchmarks (uses 32-bit table)
+    let mut group = c.benchmark_group("BSGS-k 18-bit small secrets (32-bit table)");
+    group.sample_size(100);
+
+    for k in k_values {
+        group.bench_with_input(BenchmarkId::from_parameter(k), &k, |b, &k| {
+            b.iter_batched(
+                || utils::generate_keypair(18).unwrap(),
+                |(_sk, pk)| bsgs32.solve_dlp(&pk, k, None),
+                BatchSize::SmallInput,
+            )
+        });
+    }
+
+    group.finish();
+}
+
 criterion_group! {
     name = kangaroo16_group;
     config = Criterion::default().sample_size(100);
@@ -123,6 +146,10 @@ criterion_group! {
     targets = bench_bsgs32
 }
 criterion_group!(bsgs_batched32_group, bench_bsgs_batched32);
+criterion_group!(
+    bsgs_batched32_small_group,
+    bench_bsgs_batched32_small_secrets
+);
 
 criterion_main!(
     kangaroo16_group,
@@ -130,5 +157,6 @@ criterion_main!(
     kangaroo48_group,
     point_ops_group,
     bsgs32_group,
-    bsgs_batched32_group
+    bsgs_batched32_group,
+    bsgs_batched32_small_group
 );
