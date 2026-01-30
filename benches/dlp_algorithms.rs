@@ -1,29 +1,17 @@
-use criterion::{black_box, criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, BatchSize, Criterion};
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::scalar::Scalar;
-use pollard_kangaroo::bl12::presets::Presets;
+use pollard_kangaroo::bl12::precomputed_tables::PrecomputedTables as Bl12Tables;
 use pollard_kangaroo::bl12::Bl12;
-use pollard_kangaroo::bsgs::presets::BabyStepGiantStepPresets;
+use pollard_kangaroo::bsgs::precomputed_tables::PrecomputedTables as BsgsTables;
 use pollard_kangaroo::bsgs::BabyStepGiantStep;
-use pollard_kangaroo::bsgs_k::presets::BabyStepGiantStepKPresets;
+use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
 use pollard_kangaroo::utils;
 use rand_core::OsRng;
 
-fn bench_bl12_16(c: &mut Criterion) {
-    let bl12_16 = Bl12::from_preset(Presets::Bl12_16).unwrap();
-
-    c.bench_function("[BL12] 16-bit secrets", |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(16).unwrap(),
-            |(_sk, pk)| bl12_16.solve_dlp(&pk, None),
-            BatchSize::SmallInput,
-        )
-    });
-}
-
 fn bench_bl12_32(c: &mut Criterion) {
-    let bl12_32 = Bl12::from_preset(Presets::Bl12_32).unwrap();
+    let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::Bl12_32).unwrap();
 
     c.bench_function("[BL12] 32-bit secrets", |b| {
         b.iter_batched(
@@ -35,7 +23,7 @@ fn bench_bl12_32(c: &mut Criterion) {
 }
 
 fn bench_bl12_48(c: &mut Criterion) {
-    let bl12_48 = Bl12::from_preset(Presets::Bl12_48).unwrap();
+    let bl12_48 = Bl12::from_precomputed_table(Bl12Tables::Bl12_48).unwrap();
 
     c.bench_function("[BL12] 48-bit secrets", |b| {
         b.iter_batched(
@@ -65,7 +53,7 @@ fn bench_point_compression(c: &mut Criterion) {
 
 fn bench_bsgs32(c: &mut Criterion) {
     let bsgs32 =
-        BabyStepGiantStep::from_preset(BabyStepGiantStepPresets::BabyStepGiantStep32).unwrap();
+        BabyStepGiantStep::from_precomputed_table(BsgsTables::BabyStepGiantStep32).unwrap();
 
     c.bench_function("BSGS 32-bit secrets", |b| {
         b.iter_batched(
@@ -80,10 +68,9 @@ fn bench_bsgs32(c: &mut Criterion) {
 macro_rules! bench_bsgs_k {
     ($name:ident, $k:expr) => {
         fn $name(c: &mut Criterion) {
-            let bsgs = BabyStepGiantStepK::<$k>::from_preset(
-                BabyStepGiantStepKPresets::BabyStepGiantStep32,
-            )
-            .unwrap();
+            let bsgs =
+                BabyStepGiantStepK::<$k>::from_precomputed_table(BsgsKTables::BabyStepGiantStep32)
+                    .unwrap();
 
             c.bench_function(&format!("BSGS-k K={} 32-bit secrets", $k), |b| {
                 b.iter_batched(
@@ -116,10 +103,9 @@ bench_bsgs_k!(bench_bsgs_k_16384, 16384);
 macro_rules! bench_bsgs_k_small {
     ($name:ident, $k:expr) => {
         fn $name(c: &mut Criterion) {
-            let bsgs = BabyStepGiantStepK::<$k>::from_preset(
-                BabyStepGiantStepKPresets::BabyStepGiantStep32,
-            )
-            .unwrap();
+            let bsgs =
+                BabyStepGiantStepK::<$k>::from_precomputed_table(BsgsKTables::BabyStepGiantStep32)
+                    .unwrap();
 
             c.bench_function(
                 &format!("BSGS-k K={} 18-bit secrets (32-bit table)", $k),
@@ -140,11 +126,6 @@ bench_bsgs_k_small!(bench_bsgs_k_small_128, 128);
 bench_bsgs_k_small!(bench_bsgs_k_small_1024, 1024);
 bench_bsgs_k_small!(bench_bsgs_k_small_2048, 2048);
 
-criterion_group! {
-    name = bl12_16_group;
-    config = Criterion::default().sample_size(100);
-    targets = bench_bl12_16
-}
 criterion_group! {
     name = bl12_32_group;
     config = Criterion::default().sample_size(100);
@@ -196,7 +177,6 @@ criterion_group! {
 }
 
 criterion_main!(
-    bl12_16_group,
     bl12_32_group,
     bl12_48_group,
     point_ops_group,

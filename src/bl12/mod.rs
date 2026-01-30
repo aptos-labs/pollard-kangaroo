@@ -6,11 +6,11 @@
 //! by Daniel J. Bernstein and Tanja Lange (2012).
 //! https://cr.yp.to/dlog/cuberoot-20120919.pdf
 
-#[cfg(feature = "bl12_presets")]
-pub mod presets;
+#[cfg(feature = "bl12_precomputed_tables")]
+pub mod precomputed_tables;
 
-#[cfg(feature = "bl12_presets")]
-use crate::bl12::presets::Presets;
+#[cfg(feature = "bl12_precomputed_tables")]
+use crate::bl12::precomputed_tables::PrecomputedTables;
 use crate::utils;
 
 use anyhow::{Context, Result};
@@ -87,15 +87,13 @@ impl Bl12 {
         Ok(Bl12 { parameters, table })
     }
 
-    #[cfg(feature = "bl12_presets")]
-    pub fn from_preset(preset: Presets) -> Result<Bl12> {
-        let bl12_bytes = match preset {
-            #[cfg(feature = "bl12_table16")]
-            Presets::Bl12_16 => presets::BL12_16,
+    #[cfg(feature = "bl12_precomputed_tables")]
+    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Bl12> {
+        let bl12_bytes = match table {
             #[cfg(feature = "bl12_table32")]
-            Presets::Bl12_32 => presets::BL12_32,
+            PrecomputedTables::Bl12_32 => precomputed_tables::BL12_32,
             #[cfg(feature = "bl12_table48")]
-            Presets::Bl12_48 => presets::BL12_48,
+            PrecomputedTables::Bl12_48 => precomputed_tables::BL12_48,
         };
 
         let bl12: Bl12 = bincode::deserialize(bl12_bytes).context("failed to deserialize table")?;
@@ -265,7 +263,7 @@ fn get_last_point_bytes(compressed_point: &CompressedRistretto) -> u64 {
 impl crate::DlogSolver for Bl12 {
     fn new_and_compute_table(max_num_bits: u8) -> Result<Self> {
         // Generate reasonable parameters based on max_num_bits
-        // These are heuristics based on the existing presets
+        // These are heuristics based on the existing precomputed tables
         let parameters = Parameters::for_max_num_bits(max_num_bits)?;
         Self::from_parameters(parameters)
     }
@@ -326,7 +324,7 @@ impl Parameters {
             });
         }
 
-        // Heuristics based on existing presets:
+        // Heuristics based on existing precomputed tables:
         // - W (distinguished point threshold) scales with sqrt(search space)
         // - N (table size) scales with sqrt(search space)
         // - R (number of step scalars) is kept small (power of 2)

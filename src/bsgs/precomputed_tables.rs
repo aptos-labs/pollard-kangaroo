@@ -1,6 +1,6 @@
 use super::BabyStepGiantStepParameters;
 
-pub enum BabyStepGiantStepPresets {
+pub enum PrecomputedTables {
     #[cfg(feature = "bsgs_table32")]
     BabyStepGiantStep32,
 }

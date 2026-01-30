@@ -6,11 +6,11 @@
 //! point compression across K iterations. The table stores doubled baby steps
 //! (2*g^j) so that we can use the batched double-and-compress API.
 
-#[cfg(feature = "bsgs_k_presets")]
-pub mod presets;
+#[cfg(feature = "bsgs_k_precomputed_tables")]
+pub mod precomputed_tables;
 
-#[cfg(feature = "bsgs_k_presets")]
-use crate::bsgs_k::presets::BabyStepGiantStepKPresets;
+#[cfg(feature = "bsgs_k_precomputed_tables")]
+use crate::bsgs_k::precomputed_tables::PrecomputedTables;
 
 use anyhow::{Context, Result};
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
@@ -67,11 +67,11 @@ impl<const K: usize> BabyStepGiantStepK<K> {
         Ok(Self { parameters, table })
     }
 
-    #[cfg(feature = "bsgs_k_presets")]
-    pub fn from_preset(preset: BabyStepGiantStepKPresets) -> Result<Self> {
-        let bsgs_bytes = match preset {
+    #[cfg(feature = "bsgs_k_precomputed_tables")]
+    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Self> {
+        let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_k_table32")]
-            BabyStepGiantStepKPresets::BabyStepGiantStep32 => presets::BSGS_K_32,
+            PrecomputedTables::BabyStepGiantStep32 => precomputed_tables::BSGS_K_32,
         };
 
         let bsgs: Self = bincode::deserialize(bsgs_bytes).context("failed to deserialize table")?;

@@ -1,22 +1,11 @@
 use super::Parameters;
 
-pub enum Presets {
-    #[cfg(feature = "bl12_table16")]
-    Bl12_16,
+pub enum PrecomputedTables {
     #[cfg(feature = "bl12_table32")]
     Bl12_32,
     #[cfg(feature = "bl12_table48")]
     Bl12_48,
 }
-
-#[cfg(feature = "bl12_table16")]
-pub const PARAMETERS_16: Parameters = Parameters {
-    i: 8,
-    W: 8,
-    N: 8000,
-    R: 64,
-    secret_size: 16,
-};
 
 #[cfg(feature = "bl12_table32")]
 pub const PARAMETERS_32: Parameters = Parameters {
@@ -35,9 +24,6 @@ pub const PARAMETERS_48: Parameters = Parameters {
     R: 128,
     secret_size: 48,
 };
-
-#[cfg(feature = "bl12_table16")]
-pub const BL12_16: &[u8] = include_bytes!("rsc/table_16");
 
 #[cfg(feature = "bl12_table32")]
 pub const BL12_32: &[u8] = include_bytes!("rsc/table_32");

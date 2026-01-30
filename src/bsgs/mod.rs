@@ -2,11 +2,11 @@
 
 //! Baby-step Giant-step algorithm for solving discrete logarithms.
 
-#[cfg(feature = "bsgs_presets")]
-pub mod presets;
+#[cfg(feature = "bsgs_precomputed_tables")]
+pub mod precomputed_tables;
 
-#[cfg(feature = "bsgs_presets")]
-use crate::bsgs::presets::BabyStepGiantStepPresets;
+#[cfg(feature = "bsgs_precomputed_tables")]
+use crate::bsgs::precomputed_tables::PrecomputedTables;
 use crate::utils;
 
 use anyhow::{Context, Result};
@@ -58,11 +58,11 @@ impl BabyStepGiantStep {
         Ok(BabyStepGiantStep { parameters, table })
     }
 
-    #[cfg(feature = "bsgs_presets")]
-    pub fn from_preset(preset: BabyStepGiantStepPresets) -> Result<BabyStepGiantStep> {
-        let bsgs_bytes = match preset {
+    #[cfg(feature = "bsgs_precomputed_tables")]
+    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<BabyStepGiantStep> {
+        let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_table32")]
-            BabyStepGiantStepPresets::BabyStepGiantStep32 => presets::BSGS_32,
+            PrecomputedTables::BabyStepGiantStep32 => precomputed_tables::BSGS_32,
         };
 
         let bsgs: BabyStepGiantStep =
