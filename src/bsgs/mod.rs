@@ -2,10 +2,10 @@
 
 //! Baby-step Giant-step algorithm for solving discrete logarithms.
 
-#[cfg(feature = "bsgs_precomputed_tables")]
+#[cfg(feature = "bsgs_table32")]
 pub mod precomputed_tables;
 
-#[cfg(feature = "bsgs_precomputed_tables")]
+#[cfg(feature = "bsgs_table32")]
 use crate::bsgs::precomputed_tables::PrecomputedTables;
 use crate::utils;
 
@@ -58,7 +58,7 @@ impl BabyStepGiantStep {
         Ok(BabyStepGiantStep { parameters, table })
     }
 
-    #[cfg(feature = "bsgs_precomputed_tables")]
+    #[cfg(feature = "bsgs_table32")]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<BabyStepGiantStep> {
         let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_table32")]

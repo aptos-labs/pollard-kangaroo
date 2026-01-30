@@ -6,10 +6,10 @@
 //! point compression across K iterations. The table stores doubled baby steps
 //! (2*g^j) so that we can use the batched double-and-compress API.
 
-#[cfg(feature = "bsgs_k_precomputed_tables")]
+#[cfg(feature = "bsgs_k_table32")]
 pub mod precomputed_tables;
 
-#[cfg(feature = "bsgs_k_precomputed_tables")]
+#[cfg(feature = "bsgs_k_table32")]
 use crate::bsgs_k::precomputed_tables::PrecomputedTables;
 
 use anyhow::{Context, Result};
@@ -67,7 +67,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
         Ok(Self { parameters, table })
     }
 
-    #[cfg(feature = "bsgs_k_precomputed_tables")]
+    #[cfg(feature = "bsgs_k_table32")]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Self> {
         let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_k_table32")]

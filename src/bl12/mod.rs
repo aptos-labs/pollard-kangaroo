@@ -6,10 +6,10 @@
 //! by Daniel J. Bernstein and Tanja Lange (2012).
 //! https://cr.yp.to/dlog/cuberoot-20120919.pdf
 
-#[cfg(feature = "bl12_precomputed_tables")]
+#[cfg(any(feature = "bl12_table32", feature = "bl12_table48"))]
 pub mod precomputed_tables;
 
-#[cfg(feature = "bl12_precomputed_tables")]
+#[cfg(any(feature = "bl12_table32", feature = "bl12_table48"))]
 use crate::bl12::precomputed_tables::PrecomputedTables;
 use crate::utils;
 
@@ -87,7 +87,7 @@ impl Bl12 {
         Ok(Bl12 { parameters, table })
     }
 
-    #[cfg(feature = "bl12_precomputed_tables")]
+    #[cfg(any(feature = "bl12_table32", feature = "bl12_table48"))]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Bl12> {
         let bl12_bytes = match table {
             #[cfg(feature = "bl12_table32")]

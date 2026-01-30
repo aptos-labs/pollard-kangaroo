@@ -8,10 +8,10 @@
 //!
 //! This is only practical for small values of ℓ (e.g., ℓ ≤ 24).
 
-#[cfg(feature = "naive_lookup_precomputed_tables")]
+#[cfg(feature = "naive_lookup_table16")]
 pub mod precomputed_tables;
 
-#[cfg(feature = "naive_lookup_precomputed_tables")]
+#[cfg(feature = "naive_lookup_table16")]
 use crate::naive_lookup::precomputed_tables::PrecomputedTables;
 
 use anyhow::{Context, Result};
@@ -60,7 +60,7 @@ impl NaiveLookup {
     }
 
     /// Creates a solver from a precomputed table.
-    #[cfg(feature = "naive_lookup_precomputed_tables")]
+    #[cfg(feature = "naive_lookup_table16")]
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<NaiveLookup> {
         let bytes = match table {
             #[cfg(feature = "naive_lookup_table16")]
