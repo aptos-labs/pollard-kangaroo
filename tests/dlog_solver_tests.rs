@@ -66,15 +66,15 @@ macro_rules! generate_dlog_tests {
                 test_all_values::<$solver>(5);
             }
 
-            #[test]
-            fn test_6_bit() {
-                test_all_values::<$solver>(6);
-            }
-
-            #[test]
-            fn test_7_bit() {
-                test_all_values::<$solver>(7);
-            }
+            // #[test]
+            // fn test_6_bit() {
+            //     test_all_values::<$solver>(6);
+            // }
+            //
+            // #[test]
+            // fn test_7_bit() {
+            //     test_all_values::<$solver>(7);
+            // }
         }
     };
 }

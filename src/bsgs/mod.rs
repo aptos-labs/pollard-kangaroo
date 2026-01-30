@@ -40,10 +40,6 @@ pub struct BabyStepGiantStepTable {
 
     /// Precomputed giant step: g^(-m) used to compute h * (g^(-m))^i.
     pub giant_step: RistrettoPoint,
-
-    /// The scalar -m (mod group order).
-    /// TODO: is this even used? if not, remove it. (same for the BSGS-k algorithm)
-    pub neg_m: Scalar,
 }
 
 /// Defines constants based on which the BSGS algorithm runs.
@@ -163,7 +159,6 @@ impl BabyStepGiantStepTable {
         Ok(BabyStepGiantStepTable {
             baby_steps,
             giant_step,
-            neg_m,
         })
     }
 }
