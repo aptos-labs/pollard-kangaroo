@@ -82,6 +82,15 @@ fn bench_bsgs_k_32bit(c: &mut Criterion) {
 
 /// Benchmarks BSGS-k for 18-bit secrets (using 32-bit table) with varying K values.
 fn bench_bsgs_k_18bit(c: &mut Criterion) {
+    bench_bsgs_k::<32>(c, 17, "18-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 18, "18-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 19, "19-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 20, "20-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 21, "20-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 22, "20-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 23, "20-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 24, "20-bit secrets (32-bit table)");
+
     bench_bsgs_k::<64>(c, 18, "18-bit secrets (32-bit table)");
     bench_bsgs_k::<128>(c, 18, "18-bit secrets (32-bit table)");
     bench_bsgs_k::<1024>(c, 18, "18-bit secrets (32-bit table)");

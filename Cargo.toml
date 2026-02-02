@@ -19,7 +19,12 @@ bsgs_k_table32 = ["bsgs_k", "precomputed_tables"]
 naive_lookup_table16 = ["naive_lookup", "precomputed_tables"]
 
 [dependencies]
-curve25519-dalek = { version = "4", features = ["serde", "rand_core"] }
+# Minimize curve25519-dalek size: disable default features, enable only what we need
+# - alloc: required for Vec, etc.
+# - serde: required for table serialization
+# - rand_core: required for random scalar generation
+# Note: precomputed-tables disabled (we don't use scalar multiplication at runtime)
+curve25519-dalek = { version = "4", default-features = false, features = ["alloc", "serde", "rand_core"] }
 anyhow = { version = "1", default-features = false }
 rand_core = { version = "0.6", default-features = false, features = ["getrandom"] }
 serde = { version = "1", features = ["derive"], optional = true }
