@@ -33,7 +33,7 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn bl12_solves_32_bit() {
         let mut rng = create_seeded_rng("bl12_solves_32_bit");
-        let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32).unwrap();
+        let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -49,7 +49,7 @@ mod dlog_with_precomputed_tables {
     fn bsgs_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32).unwrap();
+            BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -62,8 +62,7 @@ mod dlog_with_precomputed_tables {
     fn bsgs_k64_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k64_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BsgsK32)
-                .unwrap();
+            BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -76,8 +75,7 @@ mod dlog_with_precomputed_tables {
     fn bsgs_k256_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k256_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BsgsK32)
-                .unwrap();
+            BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -90,8 +88,7 @@ mod dlog_with_precomputed_tables {
     fn bsgs_k1024_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k1024_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BsgsK32)
-                .unwrap();
+            BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -103,7 +100,7 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn naive_lookup_solves_16_bit() {
         let mut rng = create_seeded_rng("naive_lookup_solves_16_bit");
-        let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16).unwrap();
+        let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);

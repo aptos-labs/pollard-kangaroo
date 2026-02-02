@@ -12,7 +12,7 @@ pub mod precomputed_tables;
 #[cfg(feature = "bsgs_k_table32")]
 use crate::bsgs_k::precomputed_tables::PrecomputedTables;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
@@ -55,16 +55,18 @@ pub struct BabyStepGiantStepK<const K: usize> {
 }
 
 impl<const K: usize> BabyStepGiantStepK<K> {
+    /// Creates a solver from a precomputed table.
+    ///
+    /// # Panics
+    /// Panics if the precomputed table is corrupted (should never happen).
     #[cfg(feature = "bsgs_k_table32")]
-    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Self> {
+    pub fn from_precomputed_table(table: PrecomputedTables) -> Self {
         let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_k_table32")]
             PrecomputedTables::BsgsK32 => precomputed_tables::BSGS_K_32,
         };
 
-        let bsgs: Self = bincode::deserialize(bsgs_bytes).context("failed to deserialize table")?;
-
-        Ok(bsgs)
+        bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted")
     }
 
     /// Solves the discrete log problem using BSGS-k.
@@ -239,8 +241,7 @@ mod tests {
         // Test with K=64
         let bsgs64 = BabyStepGiantStepK::<64>::from_precomputed_table(
             crate::bsgs_k::precomputed_tables::PrecomputedTables::BsgsK32,
-        )
-        .unwrap();
+        );
 
         for &secret in &problematic_secrets {
             let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
@@ -251,8 +252,7 @@ mod tests {
         // Test with K=256
         let bsgs256 = BabyStepGiantStepK::<256>::from_precomputed_table(
             crate::bsgs_k::precomputed_tables::PrecomputedTables::BsgsK32,
-        )
-        .unwrap();
+        );
 
         for &secret in &problematic_secrets {
             let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));

@@ -14,7 +14,7 @@ pub mod precomputed_tables;
 #[cfg(feature = "naive_lookup_table16")]
 use crate::naive_lookup::precomputed_tables::PrecomputedTables;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::traits::Identity;
@@ -48,17 +48,17 @@ pub struct NaiveLookupTable {
 
 impl NaiveLookup {
     /// Creates a solver from a precomputed table.
+    ///
+    /// # Panics
+    /// Panics if the precomputed table is corrupted (should never happen).
     #[cfg(feature = "naive_lookup_table16")]
-    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<NaiveLookup> {
+    pub fn from_precomputed_table(table: PrecomputedTables) -> NaiveLookup {
         let bytes = match table {
             #[cfg(feature = "naive_lookup_table16")]
             PrecomputedTables::NaiveLookup16 => precomputed_tables::NAIVE_LOOKUP_16,
         };
 
-        let naive: NaiveLookup =
-            bincode::deserialize(bytes).context("failed to deserialize table")?;
-
-        Ok(naive)
+        bincode::deserialize(bytes).expect("precomputed table is corrupted")
     }
 
     /// Solves the discrete log problem using naive lookup.

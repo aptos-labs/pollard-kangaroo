@@ -74,16 +74,18 @@ pub struct Bl12Table {
 }
 
 impl Bl12 {
+    /// Creates a solver from a precomputed table.
+    ///
+    /// # Panics
+    /// Panics if the precomputed table is corrupted (should never happen).
     #[cfg(feature = "bl12_table32")]
-    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Bl12> {
+    pub fn from_precomputed_table(table: PrecomputedTables) -> Bl12 {
         let bl12_bytes = match table {
             #[cfg(feature = "bl12_table32")]
             PrecomputedTables::BernsteinLange32 => precomputed_tables::BL12_32,
         };
 
-        let bl12: Bl12 = bincode::deserialize(bl12_bytes).context("failed to deserialize table")?;
-
-        Ok(bl12)
+        bincode::deserialize(bl12_bytes).expect("precomputed table is corrupted")
     }
 
     /// Solves the discrete log problem.

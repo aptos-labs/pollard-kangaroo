@@ -16,7 +16,7 @@ use pollard_kangaroo::utils;
 // =============================================================================
 
 fn bench_bl12_32bit(c: &mut Criterion) {
-    let bl12 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32).unwrap();
+    let bl12 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32);
 
     c.bench_function("[BL12] 32-bit secrets", |b| {
         b.iter_batched(
@@ -32,7 +32,7 @@ fn bench_bl12_32bit(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_bsgs_32bit(c: &mut Criterion) {
-    let bsgs = BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32).unwrap();
+    let bsgs = BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32);
 
     c.bench_function("[BSGS] 32-bit secrets", |b| {
         b.iter_batched(
@@ -50,7 +50,7 @@ fn bench_bsgs_32bit(c: &mut Criterion) {
 /// Generic benchmark for BSGS-k with compile-time K and runtime secret_bits.
 fn bench_bsgs_k<const K: usize>(c: &mut Criterion, secret_bits: u8, label_suffix: &str) {
     let bsgs =
-        BabyStepGiantStepK::<K>::from_precomputed_table(BsgsKTables::BsgsK32).unwrap();
+        BabyStepGiantStepK::<K>::from_precomputed_table(BsgsKTables::BsgsK32);
 
     c.bench_function(&format!("[BSGS-k{}], {}", K, label_suffix), |b| {
         b.iter_batched(
@@ -102,7 +102,7 @@ fn bench_bsgs_k_18bit(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_naive_lookup_16bit(c: &mut Criterion) {
-    let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16).unwrap();
+    let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16);
 
     c.bench_function("[Naive Lookup] 16-bit secrets", |b| {
         b.iter_batched(

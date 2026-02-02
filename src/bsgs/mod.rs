@@ -9,7 +9,7 @@ pub mod precomputed_tables;
 use crate::bsgs::precomputed_tables::PrecomputedTables;
 use crate::utils;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
@@ -47,17 +47,18 @@ pub struct BabyStepGiantStepTable {
 }
 
 impl BabyStepGiantStep {
+    /// Creates a solver from a precomputed table.
+    ///
+    /// # Panics
+    /// Panics if the precomputed table is corrupted (should never happen).
     #[cfg(feature = "bsgs_table32")]
-    pub fn from_precomputed_table(table: PrecomputedTables) -> Result<BabyStepGiantStep> {
+    pub fn from_precomputed_table(table: PrecomputedTables) -> BabyStepGiantStep {
         let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_table32")]
             PrecomputedTables::Bsgs32 => precomputed_tables::BSGS_32,
         };
 
-        let bsgs: BabyStepGiantStep =
-            bincode::deserialize(bsgs_bytes).context("failed to deserialize table")?;
-
-        Ok(bsgs)
+        bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted")
     }
 
     /// Solves the discrete log problem using Baby-step Giant-step.
