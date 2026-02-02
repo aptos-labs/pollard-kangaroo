@@ -7,7 +7,7 @@ use pollard_kangaroo::bsgs::precomputed_tables::PrecomputedTables as BsgsTables;
 use pollard_kangaroo::bsgs::BabyStepGiantStep;
 use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
-use pollard_kangaroo::naive_lookup::precomputed_tables::PrecomputedTables as NaiveLookupTables;
+use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
 use pollard_kangaroo::naive_lookup::NaiveLookup;
 use pollard_kangaroo::utils;
 
@@ -100,16 +100,34 @@ fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
 }
 
 // =============================================================================
-// Naive Lookup benchmarks
+// Naive Lookup from BSGS table benchmarks (reuses BSGS baby_steps)
 // =============================================================================
 
-fn bench_naive_lookup_16bit(c: &mut Criterion) {
-    let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16);
+fn bench_naive_lookup_from_bsgs_16bit(c: &mut Criterion) {
+    // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
+    let solver = NaiveLookup::from_bsgs_precomputed_table(BsgsTables::Bsgs32);
 
-    c.bench_function("[Naive Lookup] 16-bit secrets", |b| {
+    c.bench_function("[Naive Lookup from BSGS] 16-bit secrets (re-using BSGS table for 32-bit DLs)", |b| {
         b.iter_batched(
             || utils::generate_dlog_instance(16).unwrap(),
-            |(_sk, pk)| naive.solve(&pk),
+            |(_sk, pk)| solver.solve(&pk),
+            BatchSize::SmallInput,
+        )
+    });
+}
+
+// =============================================================================
+// Naive Doubled Lookup benchmarks (reuses BSGS-k tables)
+// =============================================================================
+
+fn bench_naive_doubled_lookup_16bit(c: &mut Criterion) {
+    // Reuses BSGS-k 32-bit table for 16-bit lookups
+    let solver = NaiveDoubledLookup::from_precomputed_table(BsgsKTables::BsgsK32);
+
+    c.bench_function("[Naive Doubled Lookup] 16-bit secrets (re-using BSGS-k table for 32-bit DLs)", |b| {
+        b.iter_batched(
+            || utils::generate_dlog_instance(16).unwrap(),
+            |(_sk, pk)| solver.solve(&pk),
             BatchSize::SmallInput,
         )
     });
@@ -144,9 +162,15 @@ criterion_group! {
 }
 
 criterion_group! {
-    name = naive_lookup_16bit_group;
+    name = naive_lookup_from_bsgs_16bit_group;
     config = Criterion::default().sample_size(100);
-    targets = bench_naive_lookup_16bit
+    targets = bench_naive_lookup_from_bsgs_16bit
+}
+
+criterion_group! {
+    name = naive_doubled_lookup_16bit_group;
+    config = Criterion::default().sample_size(100);
+    targets = bench_naive_doubled_lookup_16bit
 }
 
 criterion_main!(
@@ -154,5 +178,6 @@ criterion_main!(
     bsgs_32bit_group,
     bsgs_k_32bit_group,
     bsgs_k_17_to_24bit_group,
-    naive_lookup_16bit_group
+    naive_lookup_from_bsgs_16bit_group,
+    naive_doubled_lookup_16bit_group
 );

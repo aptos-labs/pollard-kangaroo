@@ -7,12 +7,9 @@
 //! - Solve time: O(1) (single hash lookup)
 //!
 //! This is only practical for small values of ℓ (e.g., ℓ ≤ 24).
-
-#[cfg(feature = "naive_lookup_table16")]
-pub mod precomputed_tables;
-
-#[cfg(feature = "naive_lookup_table16")]
-use crate::naive_lookup::precomputed_tables::PrecomputedTables;
+//!
+//! Note: For 16-bit lookups, prefer using `from_bsgs_precomputed_table()` which
+//! reuses the BSGS 32-bit table's baby_steps, avoiding the need for a separate table.
 
 use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
@@ -47,18 +44,34 @@ pub struct NaiveLookupTable {
 }
 
 impl NaiveLookup {
-    /// Creates a solver from a precomputed table.
+    /// Creates a 16-bit solver by reusing the BSGS 32-bit table's baby_steps.
+    ///
+    /// The BSGS table for 32-bit secrets stores `compress(j*G) -> j` for `j ∈ [0, 2^16)`,
+    /// which is exactly what we need for 16-bit naive lookup.
     ///
     /// # Panics
     /// Panics if the precomputed table is corrupted (should never happen).
-    #[cfg(feature = "naive_lookup_table16")]
-    pub fn from_precomputed_table(table: PrecomputedTables) -> NaiveLookup {
-        let bytes = match table {
-            #[cfg(feature = "naive_lookup_table16")]
-            PrecomputedTables::NaiveLookup16 => precomputed_tables::NAIVE_LOOKUP_16,
+    #[cfg(feature = "bsgs_table32")]
+    pub fn from_bsgs_precomputed_table(
+        table: crate::bsgs::precomputed_tables::PrecomputedTables,
+    ) -> NaiveLookup {
+        use crate::bsgs::precomputed_tables;
+
+        let bsgs_bytes = match table {
+            precomputed_tables::PrecomputedTables::Bsgs32 => precomputed_tables::BSGS_32,
         };
 
-        bincode::deserialize(bytes).expect("precomputed table is corrupted")
+        let bsgs: crate::bsgs::BabyStepGiantStep =
+            bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
+
+        // The BSGS baby_steps table contains compress(j*G) -> j for j in [0, 2^16)
+        // This is exactly what NaiveLookup needs for 16-bit lookups
+        NaiveLookup {
+            table: NaiveLookupTable {
+                max_num_bits: 16, // BSGS 32-bit has m = 2^16 baby steps
+                lookup: bsgs.table.baby_steps,
+            },
+        }
     }
 
     /// Solves the discrete log problem using naive lookup.
@@ -162,5 +175,25 @@ mod tests {
             let result = naive.solve(&pk).unwrap();
             assert_eq!(result, i, "failed for i={}", i);
         }
+    }
+
+    #[cfg(feature = "bsgs_table32")]
+    #[test]
+    fn naive_from_bsgs_table() {
+        use crate::bsgs::precomputed_tables::PrecomputedTables;
+
+        let naive = NaiveLookup::from_bsgs_precomputed_table(PrecomputedTables::Bsgs32);
+        assert_eq!(naive.table.max_num_bits, 16);
+
+        // Test a few values
+        for i in [0u64, 1, 100, 1000, 65535] {
+            let pk = RISTRETTO_BASEPOINT_POINT.mul(crate::utils::u64_to_scalar(i));
+            let result = naive.solve(&pk).unwrap();
+            assert_eq!(result, i, "failed for i={}", i);
+        }
+
+        // 65536 should fail (out of range for 16-bit)
+        let pk = RISTRETTO_BASEPOINT_POINT.mul(crate::utils::u64_to_scalar(65536));
+        assert!(naive.solve(&pk).is_err());
     }
 }

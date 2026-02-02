@@ -4,6 +4,8 @@ pub mod bl12;
 pub mod bsgs;
 #[cfg(feature = "bsgs_k")]
 pub mod bsgs_k;
+#[cfg(feature = "naive_doubled_lookup")]
+pub mod naive_doubled_lookup;
 #[cfg(feature = "naive_lookup")]
 pub mod naive_lookup;
 pub mod traits;

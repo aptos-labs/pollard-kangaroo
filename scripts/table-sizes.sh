@@ -36,7 +36,6 @@ tables=(
     "[BL12] 32-bit|src/bl12/rsc/table_32"
     "BSGS 32-bit|src/bsgs/rsc/table_32"
     "BSGS-k 32-bit|src/bsgs_k/rsc/table_32"
-    "Naive Lookup 16-bit|src/naive_lookup/rsc/table_16"
 )
 
 for entry in "${tables[@]}"; do

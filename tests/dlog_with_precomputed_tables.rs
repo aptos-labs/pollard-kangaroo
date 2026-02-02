@@ -10,7 +10,7 @@ mod dlog_with_precomputed_tables {
     use pollard_kangaroo::bsgs::BabyStepGiantStep;
     use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
     use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
-    use pollard_kangaroo::naive_lookup::precomputed_tables::PrecomputedTables as NaiveLookupTables;
+    use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
     use pollard_kangaroo::naive_lookup::NaiveLookup;
     use pollard_kangaroo::utils;
     use rand_chacha::ChaCha20Rng;
@@ -98,14 +98,54 @@ mod dlog_with_precomputed_tables {
     }
 
     #[test]
-    fn naive_lookup_solves_16_bit() {
-        let mut rng = create_seeded_rng("naive_lookup_solves_16_bit");
-        let naive = NaiveLookup::from_precomputed_table(NaiveLookupTables::NaiveLookup16);
+    fn naive_doubled_lookup_solves_16_bit() {
+        let mut rng = create_seeded_rng("naive_doubled_lookup_solves_16_bit");
+        // Reuses BSGS-k 32-bit table for 16-bit lookups
+        let solver = NaiveDoubledLookup::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
-        // Naive lookup is deterministic, no RNG needed for solver
-        assert_eq!(naive.solve(&pk).unwrap(), sk_u64);
+        // Naive doubled lookup is deterministic
+        assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
+    }
+
+    #[test]
+    fn naive_lookup_from_bsgs_solves_16_bit() {
+        let mut rng = create_seeded_rng("naive_lookup_from_bsgs_solves_16_bit");
+        // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
+        let solver = NaiveLookup::from_bsgs_precomputed_table(BsgsTables::Bsgs32);
+
+        let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
+        let sk_u64 = utils::scalar_to_u64(&sk);
+
+        // Naive lookup is deterministic
+        assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
+    }
+
+    #[test]
+    #[ignore]
+    fn bl12_solves_all_16bits() {
+        use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
+        use curve25519_dalek::ristretto::RistrettoPoint;
+
+        let bl12 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32);
+        let g = RISTRETTO_BASEPOINT_POINT;
+
+        // Start with g^0 = identity, then increment via EC addition
+        let mut pk = RistrettoPoint::default(); // identity
+
+        for value in 0..=65535u64 {
+            if value % 200 == 0 {
+                println!("Testing value {}/65535...", value);
+            }
+
+            let result = bl12.solve(&pk).expect(&format!("BL12 failed for value {}", value));
+            assert_eq!(result, value, "BL12 returned wrong value for x={}", value);
+
+            // g^(x+1) = g^x + g
+            pk = pk + g;
+        }
+        println!("All 65536 values passed!");
     }
 }
