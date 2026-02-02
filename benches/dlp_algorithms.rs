@@ -80,17 +80,19 @@ fn bench_bsgs_k_32bit(c: &mut Criterion) {
     bench_bsgs_k::<16384>(c, 32, "32-bit secrets");
 }
 
-/// Benchmarks BSGS-k for 18-bit secrets (using 32-bit table) with varying K values.
-fn bench_bsgs_k_18bit(c: &mut Criterion) {
-    bench_bsgs_k::<32>(c, 17, "18-bit secrets (32-bit table)");
+/// Benchmarks BSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
+fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
+    // BSGS-k32 for 17-24 bit secrets
+    bench_bsgs_k::<32>(c, 17, "17-bit secrets (32-bit table)");
     bench_bsgs_k::<32>(c, 18, "18-bit secrets (32-bit table)");
     bench_bsgs_k::<32>(c, 19, "19-bit secrets (32-bit table)");
     bench_bsgs_k::<32>(c, 20, "20-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 21, "20-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 22, "20-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 23, "20-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 24, "20-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 21, "21-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 22, "22-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 23, "23-bit secrets (32-bit table)");
+    bench_bsgs_k::<32>(c, 24, "24-bit secrets (32-bit table)");
 
+    // Other K values for 18-bit secrets
     bench_bsgs_k::<64>(c, 18, "18-bit secrets (32-bit table)");
     bench_bsgs_k::<128>(c, 18, "18-bit secrets (32-bit table)");
     bench_bsgs_k::<1024>(c, 18, "18-bit secrets (32-bit table)");
@@ -136,9 +138,9 @@ criterion_group! {
 }
 
 criterion_group! {
-    name = bsgs_k_18bit_group;
+    name = bsgs_k_17_to_24bit_group;
     config = Criterion::default().sample_size(100);
-    targets = bench_bsgs_k_18bit
+    targets = bench_bsgs_k_17_to_24bit
 }
 
 criterion_group! {
@@ -151,6 +153,6 @@ criterion_main!(
     bl12_32bit_group,
     bsgs_32bit_group,
     bsgs_k_32bit_group,
-    bsgs_k_18bit_group,
+    bsgs_k_17_to_24bit_group,
     naive_lookup_16bit_group
 );
