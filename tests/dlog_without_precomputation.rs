@@ -1,16 +1,16 @@
 //! Generic tests for all DLog solver implementations.
 //!
 //! This module tests all DLog algorithms ([BL12], BSGS, BSGS-k, Naive Lookup) using the
-//! `DlogSolver` trait. For each algorithm, for each $\ell in [1, max_num_bits]$, we precompute a
+//! `DiscreteLogSolver` trait. For each algorithm, for each $\ell in [1, max_num_bits]$, we precompute a
 //! table for solving $\ell$-bit DLs and test the solving algorithm on all values in [0, 2^\ell).
 
 mod dlog_without_precomputation {
     use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
     use curve25519_dalek::ristretto::RistrettoPoint;
-    use pollard_kangaroo::DlogSolver;
+    use pollard_kangaroo::DiscreteLogSolver;
 
-    /// Tests a DlogSolver implementation for all values in [0, 2^max_num_bits).
-    fn test_solver<S: DlogSolver>(max_num_bits: u8) {
+    /// Tests a DiscreteLogSolver implementation for all values in [0, 2^max_num_bits).
+    fn test_solver<S: DiscreteLogSolver>(max_num_bits: u8) {
         for ell in 1..=max_num_bits {
             let solver = S::new_and_compute_table(ell);
 

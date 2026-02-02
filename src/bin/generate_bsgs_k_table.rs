@@ -1,12 +1,12 @@
 //! Binary to generate precomputed BSGS-k tables.
 //!
-//! Usage: cargo run --bin generate_bsgs_k_table --features serde -- <bits>
+//! Usage: cargo run --bin generate_bsgs_k_table --features "bsgs_k,serde" -- <bits>
 //!
-//! Example: cargo run --bin generate_bsgs_k_table --features serde -- 32
+//! Example: cargo run --bin generate_bsgs_k_table --features "bsgs_k,serde" -- 32
 
 use anyhow::{Context, Result};
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
-use pollard_kangaroo::DlogSolver;
+use pollard_kangaroo::DiscreteLogSolver;
 use std::env;
 use std::fs::File;
 use std::io::Write;

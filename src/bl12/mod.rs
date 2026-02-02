@@ -33,13 +33,13 @@ use web_time::{Duration, Instant};
 /// https://cr.yp.to/dlog/cuberoot-20120919.pdf
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Bl12 {
-    pub table: Table,
+    pub table: Bl12Table,
 }
 
 /// Defines generated table values and algorithm parameters.
 #[cfg_attr(feature = "serde", serde_as)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Table {
+pub struct Bl12Table {
     /// Size of a secret to look for (in bits).
     pub max_num_bits: u8,
 
@@ -78,7 +78,7 @@ impl Bl12 {
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Bl12> {
         let bl12_bytes = match table {
             #[cfg(feature = "bl12_table32")]
-            PrecomputedTables::Bl12_32 => precomputed_tables::BL12_32,
+            PrecomputedTables::BernsteinLange32 => precomputed_tables::BL12_32,
         };
 
         let bl12: Bl12 = bincode::deserialize(bl12_bytes).context("failed to deserialize table")?;
@@ -86,17 +86,22 @@ impl Bl12 {
         Ok(bl12)
     }
 
-    /// Solves the discrete log problem using the default RNG (OsRng).
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
-        self.solve_dlp_with_rng(pk, max_time, &mut rand_core::OsRng)
+    /// Solves the discrete log problem.
+    pub fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
+        self.solve_with_timeout(pk, None)
     }
 
-    /// Solves the discrete log problem using the provided RNG.
+    /// Solves the discrete log problem with an optional timeout (in milliseconds).
+    pub fn solve_with_timeout(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
+        self.solve_with_timeout_and_rng(pk, max_time, &mut rand_core::OsRng)
+    }
+
+    /// Solves the discrete log problem with an optional timeout using the provided RNG.
     ///
     /// This is useful for deterministic testing when a seeded RNG is provided.
     ///
     /// TODO: I wonder if a similar trick as in BSGS-k with `double_and_compress_batch` can be used here too.
-    pub fn solve_dlp_with_rng<R: rand_core::RngCore>(
+    pub fn solve_with_timeout_and_rng<R: rand_core::RngCore>(
         &self,
         pk: &RistrettoPoint,
         max_time: Option<u64>,
@@ -148,8 +153,8 @@ impl Bl12 {
     }
 }
 
-impl Table {
-    pub fn generate(max_num_bits: u8) -> Table {
+impl Bl12Table {
+    pub fn generate(max_num_bits: u8) -> Bl12Table {
         assert!(
             max_num_bits >= 1 && max_num_bits <= 64,
             "max_num_bits must be between 1 and 64, got {}",
@@ -194,7 +199,7 @@ impl Table {
             }
         }
 
-        Table {
+        Bl12Table {
             max_num_bits,
             i,
             W: w,
@@ -316,14 +321,14 @@ impl Table {
     }
 }
 
-impl crate::DlogSolver for Bl12 {
+impl crate::DiscreteLogSolver for Bl12 {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
-        let table = Table::generate(max_num_bits);
+        let table = Bl12Table::generate(max_num_bits);
         Bl12 { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
-        self.solve_dlp(pk, None)
+        Bl12::solve(self, pk)
     }
 
     fn max_num_bits(&self) -> u8 {

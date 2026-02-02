@@ -1,12 +1,12 @@
 //! Binary to generate precomputed BL12 tables.
 //!
-//! Usage: cargo run --bin generate_bl12_table --features "bl12,precomputed_tables" -- <bits>
+//! Usage: cargo run --bin generate_bl12_table --features "bl12,serde" -- <bits>
 //!
-//! Example: cargo run --bin generate_bl12_table --features "bl12,precomputed_tables" -- 32
+//! Example: cargo run --bin generate_bl12_table --features "bl12,serde" -- 32
 
 use anyhow::{Context, Result};
 use pollard_kangaroo::bl12::Bl12;
-use pollard_kangaroo::DlogSolver;
+use pollard_kangaroo::DiscreteLogSolver;
 use std::env;
 use std::fs::File;
 use std::io::Write;

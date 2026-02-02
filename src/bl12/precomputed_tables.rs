@@ -2,7 +2,7 @@
 
 pub enum PrecomputedTables {
     #[cfg(feature = "bl12_table32")]
-    Bl12_32,
+    BernsteinLange32,
 }
 
 #[cfg(feature = "bl12_table32")]

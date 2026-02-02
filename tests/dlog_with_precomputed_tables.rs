@@ -33,14 +33,14 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn bl12_solves_32_bit() {
         let mut rng = create_seeded_rng("bl12_solves_32_bit");
-        let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::Bl12_32).unwrap();
+        let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32).unwrap();
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // Use the seeded RNG for the solver as well (BL12 is randomized)
         assert_eq!(
-            bl12_32.solve_dlp_with_rng(&pk, None, &mut rng).unwrap(),
+            bl12_32.solve_with_timeout_and_rng(&pk, None, &mut rng).unwrap(),
             sk_u64
         );
     }
@@ -49,55 +49,55 @@ mod dlog_with_precomputed_tables {
     fn bsgs_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStep::from_precomputed_table(BsgsTables::BabyStepGiantStep32).unwrap();
+            BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32).unwrap();
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // BSGS is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
+        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
     }
 
     #[test]
     fn bsgs_k64_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k64_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BabyStepGiantStep32)
+            BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BsgsK32)
                 .unwrap();
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // BSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
+        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
     }
 
     #[test]
     fn bsgs_k256_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k256_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BabyStepGiantStep32)
+            BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BsgsK32)
                 .unwrap();
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // BSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
+        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
     }
 
     #[test]
     fn bsgs_k1024_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k1024_solves_32_bit");
         let bsgs32 =
-            BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BabyStepGiantStep32)
+            BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BsgsK32)
                 .unwrap();
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // BSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve_dlp(&pk, None).unwrap(), sk_u64);
+        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
     }
 
     #[test]
@@ -109,6 +109,6 @@ mod dlog_with_precomputed_tables {
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // Naive lookup is deterministic, no RNG needed for solver
-        assert_eq!(naive.solve_dlp(&pk, None).unwrap(), sk_u64);
+        assert_eq!(naive.solve(&pk).unwrap(), sk_u64);
     }
 }

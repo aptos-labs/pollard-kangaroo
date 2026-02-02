@@ -1,12 +1,12 @@
 //! Binary to generate precomputed naive lookup tables.
 //!
-//! Usage: cargo run --bin generate_naive_lookup_table --features serde -- <bits>
+//! Usage: cargo run --bin generate_naive_lookup_table --features "naive_lookup,serde" -- <bits>
 //!
-//! Example: cargo run --bin generate_naive_lookup_table --features serde -- 16
+//! Example: cargo run --bin generate_naive_lookup_table --features "naive_lookup,serde" -- 16
 
 use anyhow::{Context, Result};
 use pollard_kangaroo::naive_lookup::NaiveLookup;
-use pollard_kangaroo::DlogSolver;
+use pollard_kangaroo::DiscreteLogSolver;
 use std::env;
 use std::fs::File;
 use std::io::Write;

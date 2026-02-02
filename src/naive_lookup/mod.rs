@@ -61,19 +61,10 @@ impl NaiveLookup {
         Ok(naive)
     }
 
-    /// Solves the discrete logarithm problem using naive lookup.
+    /// Solves the discrete log problem using naive lookup.
     ///
     /// Given pk = g^x, finds x where x is in [0, 2^max_num_bits).
-    ///
-    /// Note: `max_time` must be `None`. Naive lookup is deterministic and always
-    /// terminates in constant time, so timeout is not supported.
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
-        if max_time.is_some() {
-            return Err(anyhow::anyhow!(
-                "timeout not supported for naive lookup (deterministic algorithm)"
-            ));
-        }
-
+    pub fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
         let pk_compressed = pk.compress();
 
         self.table
@@ -122,14 +113,14 @@ impl NaiveLookupTable {
     }
 }
 
-impl crate::DlogSolver for NaiveLookup {
+impl crate::DiscreteLogSolver for NaiveLookup {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = NaiveLookupTable::generate(max_num_bits);
         NaiveLookup { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
-        self.solve_dlp(pk, None)
+        NaiveLookup::solve(self, pk)
     }
 
     fn max_num_bits(&self) -> u8 {
@@ -140,7 +131,7 @@ impl crate::DlogSolver for NaiveLookup {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::DlogSolver;
+    use crate::DiscreteLogSolver;
     use std::ops::Mul;
 
     #[test]

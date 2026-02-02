@@ -2,7 +2,7 @@
 
 pub enum PrecomputedTables {
     #[cfg(feature = "bsgs_k_table32")]
-    BabyStepGiantStep32,
+    BsgsK32,
 }
 
 #[cfg(feature = "bsgs_k_table32")]

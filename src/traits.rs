@@ -1,13 +1,13 @@
-//! Traits for discrete logarithm solvers.
+//! Traits for discrete log solvers.
 
 use anyhow::Result;
 use curve25519_dalek::ristretto::RistrettoPoint;
 
-/// Trait for discrete logarithm solvers.
+/// Trait for discrete log solvers.
 ///
-/// Implementors can precompute tables for solving DLog on values < 2^ℓ,
-/// and then solve discrete logarithms efficiently.
-pub trait DlogSolver: Sized {
+/// Implementors can precompute tables for solving discrete logs on values < 2^ℓ,
+/// and then solve discrete logs efficiently.
+pub trait DiscreteLogSolver: Sized {
     /// Creates a new solver with precomputed tables for solving DLog
     /// on values in the range [0, 2^max_num_bits).
     ///

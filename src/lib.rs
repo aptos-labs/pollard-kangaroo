@@ -9,4 +9,4 @@ pub mod naive_lookup;
 pub mod traits;
 pub mod utils;
 
-pub use traits::DlogSolver;
+pub use traits::DiscreteLogSolver;

@@ -59,7 +59,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<Self> {
         let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_k_table32")]
-            PrecomputedTables::BabyStepGiantStep32 => precomputed_tables::BSGS_K_32,
+            PrecomputedTables::BsgsK32 => precomputed_tables::BSGS_K_32,
         };
 
         let bsgs: Self = bincode::deserialize(bsgs_bytes).context("failed to deserialize table")?;
@@ -67,7 +67,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
         Ok(bsgs)
     }
 
-    /// Solves the discrete logarithm problem using BSGS-k.
+    /// Solves the discrete log problem using BSGS-k.
     ///
     /// Given pk = g^x, finds x where x is in [0, 2^max_num_bits).
     ///
@@ -82,16 +82,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
     /// 2. Call double_and_compress_batch on all K points
     /// 3. Check each compressed point against the table of doubled baby steps
     /// 4. If found at position i with value j, then x = (batch_start + i) * m + j
-    ///
-    /// Note: `max_time` must be `None`. BSGS-k is deterministic and always terminates
-    /// in bounded time, so timeout is not supported.
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
-        if max_time.is_some() {
-            return Err(anyhow::anyhow!(
-                "timeout not supported for BSGS-k (deterministic algorithm)"
-            ));
-        }
-
+    pub fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
         if pk.eq(&RistrettoPoint::identity()) {
             return Ok(0);
         }
@@ -200,14 +191,14 @@ impl BabyStepGiantStepKTable {
     }
 }
 
-impl<const K: usize> crate::DlogSolver for BabyStepGiantStepK<K> {
+impl<const K: usize> crate::DiscreteLogSolver for BabyStepGiantStepK<K> {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = BabyStepGiantStepKTable::generate(max_num_bits);
         Self { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
-        self.solve_dlp(pk, None)
+        BabyStepGiantStepK::solve(self, pk)
     }
 
     fn max_num_bits(&self) -> u8 {
@@ -247,25 +238,25 @@ mod tests {
 
         // Test with K=64
         let bsgs64 = BabyStepGiantStepK::<64>::from_precomputed_table(
-            crate::bsgs_k::precomputed_tables::PrecomputedTables::BabyStepGiantStep32,
+            crate::bsgs_k::precomputed_tables::PrecomputedTables::BsgsK32,
         )
         .unwrap();
 
         for &secret in &problematic_secrets {
             let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
-            let result = bsgs64.solve_dlp(&pk, None).unwrap();
+            let result = bsgs64.solve(&pk).unwrap();
             assert_eq!(result, secret, "Failed for secret={} with K=64", secret);
         }
 
         // Test with K=256
         let bsgs256 = BabyStepGiantStepK::<256>::from_precomputed_table(
-            crate::bsgs_k::precomputed_tables::PrecomputedTables::BabyStepGiantStep32,
+            crate::bsgs_k::precomputed_tables::PrecomputedTables::BsgsK32,
         )
         .unwrap();
 
         for &secret in &problematic_secrets {
             let pk = RISTRETTO_BASEPOINT_POINT.mul(Scalar::from(secret));
-            let result = bsgs256.solve_dlp(&pk, None).unwrap();
+            let result = bsgs256.solve(&pk).unwrap();
             assert_eq!(result, secret, "Failed for secret={} with K=256", secret);
         }
     }

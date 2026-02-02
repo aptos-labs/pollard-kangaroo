@@ -51,7 +51,7 @@ impl BabyStepGiantStep {
     pub fn from_precomputed_table(table: PrecomputedTables) -> Result<BabyStepGiantStep> {
         let bsgs_bytes = match table {
             #[cfg(feature = "bsgs_table32")]
-            PrecomputedTables::BabyStepGiantStep32 => precomputed_tables::BSGS_32,
+            PrecomputedTables::Bsgs32 => precomputed_tables::BSGS_32,
         };
 
         let bsgs: BabyStepGiantStep =
@@ -60,7 +60,7 @@ impl BabyStepGiantStep {
         Ok(bsgs)
     }
 
-    /// Solves the discrete logarithm problem using Baby-step Giant-step.
+    /// Solves the discrete log problem using Baby-step Giant-step.
     ///
     /// Given pk = g^x, finds x where x is in [0, 2^max_num_bits).
     ///
@@ -68,16 +68,7 @@ impl BabyStepGiantStep {
     /// 1. For i = 0, 1, ..., m-1:
     ///    - Compute gamma = pk * (g^(-m))^i
     ///    - If gamma is in baby_steps table with value j, then x = i*m + j
-    ///
-    /// Note: `max_time` must be `None`. BSGS is deterministic and always terminates
-    /// in bounded time, so timeout is not supported.
-    pub fn solve_dlp(&self, pk: &RistrettoPoint, max_time: Option<u64>) -> Result<u64> {
-        if max_time.is_some() {
-            return Err(anyhow::anyhow!(
-                "timeout not supported for BSGS (deterministic algorithm)"
-            ));
-        }
-
+    pub fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
         if pk.eq(&RistrettoPoint::identity()) {
             return Ok(0);
         }
@@ -161,14 +152,14 @@ impl BabyStepGiantStepTable {
     }
 }
 
-impl crate::DlogSolver for BabyStepGiantStep {
+impl crate::DiscreteLogSolver for BabyStepGiantStep {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = BabyStepGiantStepTable::generate(max_num_bits);
         BabyStepGiantStep { table }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
-        self.solve_dlp(pk, None)
+        BabyStepGiantStep::solve(self, pk)
     }
 
     fn max_num_bits(&self) -> u8 {
