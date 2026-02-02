@@ -23,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 use std::ops::{Add, Mul};
+use std::sync::Arc;
 
 /// Defines generated table values for BSGS-k.
 #[cfg_attr(feature = "serde", serde_as)]
@@ -49,9 +50,13 @@ pub struct BabyStepGiantStepKTable {
 ///
 /// Uses `double_and_compress_batch` to amortize compression cost across
 /// K iterations.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+///
+/// The table is wrapped in `Arc` to allow sharing with other solvers (e.g.,
+/// `NaiveDoubledLookup`) without duplicating the ~2.5 MiB precomputed data.
+/// This is safe for WASM which is single-threaded, and `Arc` has negligible
+/// overhead in uncontended scenarios.
 pub struct BabyStepGiantStepK<const K: usize> {
-    pub table: BabyStepGiantStepKTable,
+    pub table: Arc<BabyStepGiantStepKTable>,
 }
 
 impl<const K: usize> BabyStepGiantStepK<K> {
@@ -66,7 +71,19 @@ impl<const K: usize> BabyStepGiantStepK<K> {
             PrecomputedTables::BsgsK32 => precomputed_tables::BSGS_K_32,
         };
 
-        bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted")
+        let table: BabyStepGiantStepKTable =
+            bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
+        Self {
+            table: Arc::new(table),
+        }
+    }
+
+    /// Returns a clone of the Arc-wrapped table.
+    ///
+    /// Use this to share the table with other solvers (e.g., `NaiveDoubledLookup`)
+    /// without duplicating the data.
+    pub fn table(&self) -> Arc<BabyStepGiantStepKTable> {
+        Arc::clone(&self.table)
     }
 
     /// Solves the discrete log problem using BSGS-k.
@@ -196,7 +213,9 @@ impl BabyStepGiantStepKTable {
 impl<const K: usize> crate::DiscreteLogSolver for BabyStepGiantStepK<K> {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = BabyStepGiantStepKTable::generate(max_num_bits);
-        Self { table }
+        Self {
+            table: Arc::new(table),
+        }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {

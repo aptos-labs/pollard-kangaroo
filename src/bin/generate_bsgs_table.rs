@@ -5,8 +5,7 @@
 //! Example: cargo run --bin generate_bsgs_table --features "bsgs,serde" -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::bsgs::BabyStepGiantStep;
-use pollard_kangaroo::DiscreteLogSolver;
+use pollard_kangaroo::bsgs::BabyStepGiantStepTable;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -35,12 +34,12 @@ fn main() -> Result<()> {
     println!("This will take some time...");
 
     let start = std::time::Instant::now();
-    let bsgs = BabyStepGiantStep::new_and_compute_table(bits);
+    let table = BabyStepGiantStepTable::generate(bits);
     let elapsed = start.elapsed();
 
     println!("Table generated in {:.2}s", elapsed.as_secs_f64());
 
-    // Serialize and save
+    // Serialize and save (just the table, not the solver struct)
     let output_path = format!("src/bsgs/rsc/table_{}", bits);
     let output_path = Path::new(&output_path);
 
@@ -49,7 +48,7 @@ fn main() -> Result<()> {
         std::fs::create_dir_all(parent).context("failed to create output directory")?;
     }
 
-    let serialized = bincode::serialize(&bsgs).context("failed to serialize BSGS table")?;
+    let serialized = bincode::serialize(&table).context("failed to serialize BSGS table")?;
 
     let mut file = File::create(output_path).context("failed to create output file")?;
     file.write_all(&serialized)

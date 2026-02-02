@@ -17,6 +17,7 @@
 use crate::bsgs_k::BabyStepGiantStepKTable;
 use anyhow::Result;
 use curve25519_dalek::ristretto::RistrettoPoint;
+use std::sync::Arc;
 
 #[cfg(feature = "bsgs_k_table32")]
 use crate::bsgs_k::precomputed_tables::PrecomputedTables;
@@ -25,14 +26,32 @@ use crate::bsgs_k::precomputed_tables::PrecomputedTables;
 ///
 /// For a BSGS-k table with `max_num_bits = N`, this solver can find discrete logs
 /// for values in `[0, 2^(N/2))` in constant time.
+///
+/// The table is wrapped in `Arc` to allow sharing with `BabyStepGiantStepK`
+/// without duplicating the ~2.5 MiB precomputed data.
 pub struct NaiveDoubledLookup {
-    /// Reference to the BSGS-k table's baby steps.
+    /// Shared reference to the BSGS-k table.
     /// The table stores `compress(2*g^j)` for `j ∈ [0, m)`.
-    pub table: BabyStepGiantStepKTable,
+    pub table: Arc<BabyStepGiantStepKTable>,
 }
 
 impl NaiveDoubledLookup {
+    /// Creates a solver that shares the table with an existing `BabyStepGiantStepK`.
+    ///
+    /// This is the preferred constructor when you already have a `BabyStepGiantStepK`
+    /// instance, as it avoids duplicating the ~2.5 MiB table data.
+    pub fn from_bsgs_k<const K: usize>(
+        bsgs_k: &crate::bsgs_k::BabyStepGiantStepK<K>,
+    ) -> NaiveDoubledLookup {
+        NaiveDoubledLookup {
+            table: bsgs_k.table(),
+        }
+    }
+
     /// Creates a solver from a precomputed BSGS-k table.
+    ///
+    /// Note: If you already have a `BabyStepGiantStepK` instance, prefer using
+    /// `from_bsgs_k()` to share the table without duplication.
     ///
     /// # Panics
     /// Panics if the precomputed table is corrupted (should never happen).
@@ -48,7 +67,9 @@ impl NaiveDoubledLookup {
         let bsgs_k_table: BabyStepGiantStepKTable =
             bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
 
-        NaiveDoubledLookup { table: bsgs_k_table }
+        NaiveDoubledLookup {
+            table: Arc::new(bsgs_k_table),
+        }
     }
 
     /// Returns the maximum number of bits this solver can handle.
@@ -87,7 +108,9 @@ impl crate::DiscreteLogSolver for NaiveDoubledLookup {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         // Generate a BSGS-k table for 2*max_num_bits to support max_num_bits lookups
         let table = BabyStepGiantStepKTable::generate(max_num_bits * 2);
-        NaiveDoubledLookup { table }
+        NaiveDoubledLookup {
+            table: Arc::new(table),
+        }
     }
 
     fn solve(&self, y: &RistrettoPoint) -> Result<u64> {
@@ -166,5 +189,25 @@ mod tests {
         let pk = RISTRETTO_BASEPOINT_POINT.mul(crate::utils::u64_to_scalar(65536));
         let result = solver.solve(&pk);
         assert!(result.is_err());
+    }
+
+    #[cfg(feature = "bsgs_k_table32")]
+    #[test]
+    fn naive_doubled_from_bsgs_k_shares_table() {
+        use crate::bsgs_k::precomputed_tables::PrecomputedTables;
+        use crate::bsgs_k::BabyStepGiantStepK;
+
+        let bsgs_k = BabyStepGiantStepK::<32>::from_precomputed_table(PrecomputedTables::BsgsK32);
+        let naive = NaiveDoubledLookup::from_bsgs_k(&bsgs_k);
+
+        // Verify they share the same Arc (same pointer)
+        assert!(Arc::ptr_eq(&bsgs_k.table, &naive.table));
+
+        // Test solving works
+        for i in [0u64, 1, 100, 1000, 65535] {
+            let pk = RISTRETTO_BASEPOINT_POINT.mul(crate::utils::u64_to_scalar(i));
+            let result = naive.solve(&pk).unwrap();
+            assert_eq!(result, i, "failed for i={}", i);
+        }
     }
 }

@@ -114,7 +114,7 @@ mod dlog_with_precomputed_tables {
     fn naive_lookup_from_bsgs_solves_16_bit() {
         let mut rng = create_seeded_rng("naive_lookup_from_bsgs_solves_16_bit");
         // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
-        let solver = NaiveLookup::from_bsgs_precomputed_table(BsgsTables::Bsgs32);
+        let solver = NaiveLookup::from_precomputed_table(BsgsTables::Bsgs32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);

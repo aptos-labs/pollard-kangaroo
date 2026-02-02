@@ -105,7 +105,7 @@ fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
 
 fn bench_naive_lookup_from_bsgs_16bit(c: &mut Criterion) {
     // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
-    let solver = NaiveLookup::from_bsgs_precomputed_table(BsgsTables::Bsgs32);
+    let solver = NaiveLookup::from_precomputed_table(BsgsTables::Bsgs32);
 
     c.bench_function("[Naive Lookup from BSGS] 16-bit secrets (re-using BSGS table for 32-bit DLs)", |b| {
         b.iter_batched(

@@ -20,11 +20,16 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 use std::ops::{Add, Mul};
+use std::sync::Arc;
 
 /// Baby-step Giant-step algorithm for solving discrete logarithms.
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+///
+/// The table is wrapped in `Arc` to allow sharing with other solvers (e.g.,
+/// `NaiveLookup`) without duplicating the ~2.5 MiB precomputed data.
+/// This is safe for WASM which is single-threaded, and `Arc` has negligible
+/// overhead in uncontended scenarios.
 pub struct BabyStepGiantStep {
-    pub table: BabyStepGiantStepTable,
+    pub table: Arc<BabyStepGiantStepTable>,
 }
 
 /// Defines generated table values for BSGS.
@@ -58,7 +63,19 @@ impl BabyStepGiantStep {
             PrecomputedTables::Bsgs32 => precomputed_tables::BSGS_32,
         };
 
-        bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted")
+        let table: BabyStepGiantStepTable =
+            bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
+        BabyStepGiantStep {
+            table: Arc::new(table),
+        }
+    }
+
+    /// Returns a clone of the Arc-wrapped table.
+    ///
+    /// Use this to share the table with other solvers (e.g., `NaiveLookup`)
+    /// without duplicating the data.
+    pub fn table(&self) -> Arc<BabyStepGiantStepTable> {
+        Arc::clone(&self.table)
     }
 
     /// Solves the discrete log problem using Baby-step Giant-step.
@@ -156,7 +173,9 @@ impl BabyStepGiantStepTable {
 impl crate::DiscreteLogSolver for BabyStepGiantStep {
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = BabyStepGiantStepTable::generate(max_num_bits);
-        BabyStepGiantStep { table }
+        BabyStepGiantStep {
+            table: Arc::new(table),
+        }
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
