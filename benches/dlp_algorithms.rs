@@ -173,13 +173,13 @@ criterion_group! {
 
 criterion_group! {
     name = bsgs_32bit_group;
-    config = Criterion::default().sample_size(10);
+    config = Criterion::default().sample_size(20);
     targets = bench_bsgs_32bit
 }
 
 criterion_group! {
     name = bsgs_k_32bit_group;
-    config = Criterion::default().sample_size(10);
+    config = Criterion::default().sample_size(20);
     targets = bench_bsgs_k_32bit
 }
 
@@ -191,7 +191,7 @@ criterion_group! {
 
 criterion_group! {
     name = tbsgs_k_32bit_group;
-    config = Criterion::default().sample_size(10);
+    config = Criterion::default().sample_size(20);
     targets = bench_tbsgs_k_32bit
 }
 
