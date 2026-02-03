@@ -326,9 +326,26 @@ impl Bl12Table {
 }
 
 impl crate::DiscreteLogSolver for Bl12 {
+    fn algorithm_name() -> &'static str {
+        "BL12"
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = Bl12Table::generate(max_num_bits);
         Bl12 { table }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        #[cfg(feature = "bl12_table32")]
+        if max_num_bits == 32 {
+            return Bl12::from_precomputed_table(PrecomputedTables::BernsteinLange32);
+        }
+
+        panic!(
+            "No precomputed BL12 table available for {} bits. \
+             Available: 32 bits (requires 'bl12_table32' feature).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {

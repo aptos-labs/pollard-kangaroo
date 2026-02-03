@@ -220,11 +220,28 @@ impl BabyStepGiantStepTable {
 }
 
 impl crate::DiscreteLogSolver for BabyStepGiantStep {
+    fn algorithm_name() -> &'static str {
+        "BSGS"
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = BabyStepGiantStepTable::generate(max_num_bits);
         BabyStepGiantStep {
             table: Arc::new(table),
         }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        #[cfg(feature = "bsgs_table32")]
+        if max_num_bits == 32 {
+            return BabyStepGiantStep::from_precomputed_table(PrecomputedTables::Bsgs32);
+        }
+
+        panic!(
+            "No precomputed BSGS table available for {} bits. \
+             Available: 32 bits (requires 'bsgs_table32' feature).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {

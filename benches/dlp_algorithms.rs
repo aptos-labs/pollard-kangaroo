@@ -1,33 +1,46 @@
 //! Benchmarks for discrete log algorithms.
 
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use pollard_kangaroo::bl12::precomputed_tables::PrecomputedTables as Bl12Tables;
-use pollard_kangaroo::bl12::Bl12;
-use pollard_kangaroo::bsgs::precomputed_tables::PrecomputedTables as BsgsTables;
-use pollard_kangaroo::bsgs::BabyStepGiantStep;
-use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
-use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
-use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
-use pollard_kangaroo::naive_lookup::NaiveLookup;
-use pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup;
-use pollard_kangaroo::tbsgs_k::precomputed_tables::PrecomputedTables as TbsgsKTables;
-use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
 use pollard_kangaroo::utils;
+use pollard_kangaroo::DiscreteLogSolver;
+
+// =============================================================================
+// Generic benchmark function
+// =============================================================================
+
+/// Generic benchmark for any DiscreteLogSolver using precomputed tables.
+///
+/// - `table_bits`: passed to `from_precomputed_table()` (e.g., 32 for BSGS, 16 for NaiveLookup)
+/// - `secret_bits`: size of secrets to generate for benchmarking
+fn bench_solver<S: DiscreteLogSolver>(c: &mut Criterion, table_bits: u8, secret_bits: u8) {
+    let solver = S::from_precomputed_table(table_bits);
+
+    let label = if secret_bits == table_bits {
+        format!("[{}], {}-bit secrets", S::algorithm_name(), secret_bits)
+    } else {
+        format!(
+            "[{}], {}-bit secrets ({}-bit table)",
+            S::algorithm_name(),
+            secret_bits,
+            table_bits
+        )
+    };
+
+    c.bench_function(&label, |b| {
+        b.iter_batched(
+            || utils::generate_dlog_instance(secret_bits).unwrap(),
+            |(_sk, pk)| solver.solve(&pk),
+            BatchSize::SmallInput,
+        )
+    });
+}
 
 // =============================================================================
 // BL12 benchmarks
 // =============================================================================
 
 fn bench_bl12_32bit(c: &mut Criterion) {
-    let bl12 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32);
-
-    c.bench_function("[BL12] 32-bit secrets", |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(32).unwrap(),
-            |(_sk, pk)| bl12.solve(&pk),
-            BatchSize::SmallInput,
-        )
-    });
+    bench_solver::<pollard_kangaroo::bl12::Bl12>(c, 32, 32);
 }
 
 // =============================================================================
@@ -35,184 +48,116 @@ fn bench_bl12_32bit(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_bsgs_32bit(c: &mut Criterion) {
-    let bsgs = BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32);
-
-    c.bench_function("[BSGS] 32-bit secrets", |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(32).unwrap(),
-            |(_sk, pk)| bsgs.solve(&pk),
-            BatchSize::SmallInput,
-        )
-    });
+    bench_solver::<pollard_kangaroo::bsgs::BabyStepGiantStep>(c, 32, 32);
 }
 
 // =============================================================================
 // BSGS-k benchmarks
 // =============================================================================
 
-/// Generic benchmark for BSGS-k with compile-time K and runtime secret_bits.
-fn bench_bsgs_k<const K: usize>(c: &mut Criterion, secret_bits: u8, label_suffix: &str) {
-    let bsgs = BabyStepGiantStepK::<K>::from_precomputed_table(BsgsKTables::BsgsK32);
-
-    c.bench_function(&format!("[BSGS-k{}], {}", K, label_suffix), |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(secret_bits).unwrap(),
-            |(_sk, pk)| bsgs.solve(&pk),
-            BatchSize::SmallInput,
-        )
-    });
-}
-
 /// Benchmarks BSGS-k for 32-bit secrets with varying K values.
 fn bench_bsgs_k_32bit(c: &mut Criterion) {
-    bench_bsgs_k::<1>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<2>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<4>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<8>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<16>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<32>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<64>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<128>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<256>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<512>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<1024>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<2048>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<4096>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<8192>(c, 32, "32-bit secrets");
-    bench_bsgs_k::<16384>(c, 32, "32-bit secrets");
+    use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
+
+    bench_solver::<BabyStepGiantStepK<1>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<2>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<4>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<8>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<16>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<64>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<128>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<256>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<512>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<1024>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<2048>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<4096>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<8192>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<16384>>(c, 32, 32);
 }
 
 /// Benchmarks BSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
 fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
+    use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
+
     // BSGS-k32 for 17-24 bit secrets
-    bench_bsgs_k::<32>(c, 17, "17-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 18, "18-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 19, "19-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 20, "20-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 21, "21-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 22, "22-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 23, "23-bit secrets (32-bit table)");
-    bench_bsgs_k::<32>(c, 24, "24-bit secrets (32-bit table)");
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 17);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 18);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 19);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 20);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 21);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 22);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 23);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 24);
 
     // Other K values for 18-bit secrets
-    bench_bsgs_k::<64>(c, 18, "18-bit secrets (32-bit table)");
-    bench_bsgs_k::<128>(c, 18, "18-bit secrets (32-bit table)");
-    bench_bsgs_k::<1024>(c, 18, "18-bit secrets (32-bit table)");
-    bench_bsgs_k::<2048>(c, 18, "18-bit secrets (32-bit table)");
+    bench_solver::<BabyStepGiantStepK<64>>(c, 32, 18);
+    bench_solver::<BabyStepGiantStepK<128>>(c, 32, 18);
+    bench_solver::<BabyStepGiantStepK<1024>>(c, 32, 18);
+    bench_solver::<BabyStepGiantStepK<2048>>(c, 32, 18);
 }
 
 // =============================================================================
 // TBSGS-k benchmarks (Truncated BSGS-k with 8-byte truncated keys)
 // =============================================================================
 
-/// Generic benchmark for TBSGS-k with compile-time K and runtime secret_bits.
-fn bench_tbsgs_k<const K: usize>(c: &mut Criterion, secret_bits: u8, label_suffix: &str) {
-    let tbsgs = TruncatedBabyStepGiantStepK::<K>::from_precomputed_table(TbsgsKTables::TbsgsK32);
-
-    c.bench_function(&format!("[TBSGS-k{}], {}", K, label_suffix), |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(secret_bits).unwrap(),
-            |(_sk, pk)| tbsgs.solve(&pk),
-            BatchSize::SmallInput,
-        )
-    });
-}
-
 /// Benchmarks TBSGS-k for 32-bit secrets with varying K values.
 fn bench_tbsgs_k_32bit(c: &mut Criterion) {
-    bench_tbsgs_k::<1>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<2>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<4>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<8>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<16>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<32>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<64>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<128>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<256>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<512>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<1024>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<2048>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<4096>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<8192>(c, 32, "32-bit secrets");
-    bench_tbsgs_k::<16384>(c, 32, "32-bit secrets");
+    use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
+
+    bench_solver::<TruncatedBabyStepGiantStepK<1>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<2>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<4>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<8>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<16>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<64>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<128>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<256>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<512>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<1024>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<2048>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<4096>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<8192>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<16384>>(c, 32, 32);
 }
 
 /// Benchmarks TBSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
 fn bench_tbsgs_k_17_to_24bit(c: &mut Criterion) {
+    use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
+
     // TBSGS-k32 for 17-24 bit secrets
-    bench_tbsgs_k::<32>(c, 17, "17-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 18, "18-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 19, "19-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 20, "20-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 21, "21-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 22, "22-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 23, "23-bit secrets (32-bit table)");
-    bench_tbsgs_k::<32>(c, 24, "24-bit secrets (32-bit table)");
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 17);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 18);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 19);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 20);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 21);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 22);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 23);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 24);
 
     // Other K values for 18-bit secrets
-    bench_tbsgs_k::<64>(c, 18, "18-bit secrets (32-bit table)");
-    bench_tbsgs_k::<128>(c, 18, "18-bit secrets (32-bit table)");
-    bench_tbsgs_k::<1024>(c, 18, "18-bit secrets (32-bit table)");
-    bench_tbsgs_k::<2048>(c, 18, "18-bit secrets (32-bit table)");
+    bench_solver::<TruncatedBabyStepGiantStepK<64>>(c, 32, 18);
+    bench_solver::<TruncatedBabyStepGiantStepK<128>>(c, 32, 18);
+    bench_solver::<TruncatedBabyStepGiantStepK<1024>>(c, 32, 18);
+    bench_solver::<TruncatedBabyStepGiantStepK<2048>>(c, 32, 18);
 }
 
 // =============================================================================
-// Naive Lookup from BSGS table benchmarks (reuses BSGS baby_steps)
+// Naive Lookup benchmarks (16-bit, reusing 32-bit tables)
 // =============================================================================
 
-fn bench_naive_lookup_from_bsgs_16bit(c: &mut Criterion) {
-    // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
-    let solver = NaiveLookup::from_precomputed_table(BsgsTables::Bsgs32);
-
-    c.bench_function(
-        "[Naive Lookup from BSGS] 16-bit secrets (re-using BSGS table for 32-bit DLs)",
-        |b| {
-            b.iter_batched(
-                || utils::generate_dlog_instance(16).unwrap(),
-                |(_sk, pk)| solver.solve(&pk),
-                BatchSize::SmallInput,
-            )
-        },
-    );
+fn bench_naive_lookup_16bit(c: &mut Criterion) {
+    bench_solver::<pollard_kangaroo::naive_lookup::NaiveLookup>(c, 16, 16);
 }
-
-// =============================================================================
-// Naive Doubled Lookup benchmarks (reuses BSGS-k tables)
-// =============================================================================
 
 fn bench_naive_doubled_lookup_16bit(c: &mut Criterion) {
-    // Reuses BSGS-k 32-bit table for 16-bit lookups
-    let solver = NaiveDoubledLookup::from_precomputed_table(BsgsKTables::BsgsK32);
-
-    c.bench_function(
-        "[Naive Doubled Lookup] 16-bit secrets (re-using BSGS-k table for 32-bit DLs)",
-        |b| {
-            b.iter_batched(
-                || utils::generate_dlog_instance(16).unwrap(),
-                |(_sk, pk)| solver.solve(&pk),
-                BatchSize::SmallInput,
-            )
-        },
-    );
+    bench_solver::<pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup>(c, 16, 16);
 }
 
-// =============================================================================
-// Naive Truncated Doubled Lookup benchmarks (reuses TBSGS-k tables)
-// =============================================================================
-
 fn bench_naive_truncated_doubled_lookup_16bit(c: &mut Criterion) {
-    // Reuses TBSGS-k 32-bit table for 16-bit lookups
-    let solver = NaiveTruncatedDoubledLookup::from_precomputed_table(TbsgsKTables::TbsgsK32);
-
-    c.bench_function(
-        "[Naive Truncated Doubled Lookup] 16-bit secrets (re-using TBSGS-k table for 32-bit DLs)",
-        |b| {
-            b.iter_batched(
-                || utils::generate_dlog_instance(16).unwrap(),
-                |(_sk, pk)| solver.solve(&pk),
-                BatchSize::SmallInput,
-            )
-        },
+    bench_solver::<pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup>(
+        c, 16, 16,
     );
 }
 
@@ -257,9 +202,9 @@ criterion_group! {
 }
 
 criterion_group! {
-    name = naive_lookup_from_bsgs_16bit_group;
+    name = naive_lookup_16bit_group;
     config = Criterion::default().sample_size(100);
-    targets = bench_naive_lookup_from_bsgs_16bit
+    targets = bench_naive_lookup_16bit
 }
 
 criterion_group! {
@@ -281,7 +226,7 @@ criterion_main!(
     bsgs_k_17_to_24bit_group,
     tbsgs_k_32bit_group,
     tbsgs_k_17_to_24bit_group,
-    naive_lookup_from_bsgs_16bit_group,
+    naive_lookup_16bit_group,
     naive_doubled_lookup_16bit_group,
     naive_truncated_doubled_lookup_16bit_group
 );

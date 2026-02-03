@@ -8,7 +8,12 @@ use curve25519_dalek::ristretto::RistrettoPoint;
 /// Implementors can precompute tables for solving discrete logs on values < 2^ℓ,
 /// and then solve discrete logs efficiently.
 pub trait DiscreteLogSolver: Sized {
-    /// Creates a new solver with precomputed tables for solving DLog
+    /// Returns the algorithm name (e.g., "BSGS", "BSGS-k32", "BL12").
+    ///
+    /// Used for test and benchmark output.
+    fn algorithm_name() -> &'static str;
+
+    /// Creates a new solver by computing tables for solving DLog
     /// on values in the range [0, 2^max_num_bits).
     ///
     /// # Arguments
@@ -18,6 +23,19 @@ pub trait DiscreteLogSolver: Sized {
     /// # Panics
     /// Panics if `max_num_bits` is out of the valid range for the algorithm.
     fn new_and_compute_table(max_num_bits: u8) -> Self;
+
+    /// Creates a new solver from a precomputed table for the given bit size.
+    ///
+    /// This is more efficient than `new_and_compute_table` when precomputed
+    /// tables are available (e.g., compiled into the binary).
+    ///
+    /// # Arguments
+    /// * `max_num_bits` - The number of bits (ℓ). Must match an available
+    ///   precomputed table (typically 32).
+    ///
+    /// # Panics
+    /// Panics if no precomputed table is available for the given bit size.
+    fn from_precomputed_table(max_num_bits: u8) -> Self;
 
     /// Solves the discrete logarithm problem.
     ///

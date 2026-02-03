@@ -86,12 +86,32 @@ impl NaiveLookup {
 }
 
 impl crate::DiscreteLogSolver for NaiveLookup {
+    fn algorithm_name() -> &'static str {
+        "NaiveLookup"
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         // Generate a BSGS table for 2*max_num_bits to get max_num_bits baby steps
         let table = BabyStepGiantStepTable::generate(max_num_bits * 2);
         NaiveLookup {
             table: Arc::new(table),
         }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        // NaiveLookup uses BSGS tables, so for 16-bit lookups we need 32-bit BSGS table
+        #[cfg(feature = "bsgs_table32")]
+        if max_num_bits == 16 {
+            return NaiveLookup::from_precomputed_table(
+                crate::bsgs::precomputed_tables::PrecomputedTables::Bsgs32,
+            );
+        }
+
+        panic!(
+            "No precomputed NaiveLookup table available for {} bits. \
+             Available: 16 bits (requires 'bsgs_table32' feature, uses BSGS 32-bit table).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, y: &RistrettoPoint) -> Result<u64> {

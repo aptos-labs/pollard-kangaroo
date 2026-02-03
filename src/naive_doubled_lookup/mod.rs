@@ -102,12 +102,30 @@ impl NaiveDoubledLookup {
 }
 
 impl crate::DiscreteLogSolver for NaiveDoubledLookup {
+    fn algorithm_name() -> &'static str {
+        "NaiveDoubledLookup"
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         // Generate a BSGS-k table for 2*max_num_bits to support max_num_bits lookups
         let table = BabyStepGiantStepKTable::generate(max_num_bits * 2);
         NaiveDoubledLookup {
             table: Arc::new(table),
         }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        // NaiveDoubledLookup uses BSGS-k tables, so for 16-bit lookups we need 32-bit BSGS-k table
+        #[cfg(feature = "bsgs_k_table32")]
+        if max_num_bits == 16 {
+            return NaiveDoubledLookup::from_precomputed_table(PrecomputedTables::BsgsK32);
+        }
+
+        panic!(
+            "No precomputed NaiveDoubledLookup table available for {} bits. \
+             Available: 16 bits (requires 'bsgs_k_table32' feature, uses BSGS-k 32-bit table).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, y: &RistrettoPoint) -> Result<u64> {

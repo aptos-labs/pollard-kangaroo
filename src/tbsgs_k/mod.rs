@@ -280,11 +280,47 @@ impl TruncatedBabyStepGiantStepKTable {
 }
 
 impl<const K: usize> crate::DiscreteLogSolver for TruncatedBabyStepGiantStepK<K> {
+    fn algorithm_name() -> &'static str {
+        match K {
+            1 => "TBSGS-k1",
+            2 => "TBSGS-k2",
+            4 => "TBSGS-k4",
+            8 => "TBSGS-k8",
+            16 => "TBSGS-k16",
+            32 => "TBSGS-k32",
+            64 => "TBSGS-k64",
+            128 => "TBSGS-k128",
+            256 => "TBSGS-k256",
+            512 => "TBSGS-k512",
+            1024 => "TBSGS-k1024",
+            2048 => "TBSGS-k2048",
+            4096 => "TBSGS-k4096",
+            8192 => "TBSGS-k8192",
+            16384 => "TBSGS-k16384",
+            _ => "TBSGS-k?",
+        }
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = TruncatedBabyStepGiantStepKTable::generate(max_num_bits);
         Self {
             table: Arc::new(table),
         }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        #[cfg(feature = "tbsgs_k_table32")]
+        if max_num_bits == 32 {
+            return TruncatedBabyStepGiantStepK::from_precomputed_table(
+                PrecomputedTables::TbsgsK32,
+            );
+        }
+
+        panic!(
+            "No precomputed TBSGS-k table available for {} bits. \
+             Available: 32 bits (requires 'tbsgs_k_table32' feature).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {

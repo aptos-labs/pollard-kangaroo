@@ -124,12 +124,32 @@ impl NaiveTruncatedDoubledLookup {
 }
 
 impl crate::DiscreteLogSolver for NaiveTruncatedDoubledLookup {
+    fn algorithm_name() -> &'static str {
+        "NaiveTruncatedDoubledLookup"
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         // Generate a TBSGS-k table for 2*max_num_bits to support max_num_bits lookups
         let table = TruncatedBabyStepGiantStepKTable::generate(max_num_bits * 2);
         NaiveTruncatedDoubledLookup {
             table: Arc::new(table),
         }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        // NaiveTruncatedDoubledLookup uses TBSGS-k tables, so for 16-bit lookups we need 32-bit TBSGS-k table
+        #[cfg(feature = "tbsgs_k_table32")]
+        if max_num_bits == 16 {
+            return NaiveTruncatedDoubledLookup::from_precomputed_table(
+                PrecomputedTables::TbsgsK32,
+            );
+        }
+
+        panic!(
+            "No precomputed NaiveTruncatedDoubledLookup table available for {} bits. \
+             Available: 16 bits (requires 'tbsgs_k_table32' feature, uses TBSGS-k 32-bit table).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, y: &RistrettoPoint) -> Result<u64> {

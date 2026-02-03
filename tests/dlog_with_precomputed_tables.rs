@@ -4,18 +4,8 @@
 //! The seed is printed at the start of each test for reproducibility.
 
 mod dlog_with_precomputed_tables {
-    use pollard_kangaroo::bl12::precomputed_tables::PrecomputedTables as Bl12Tables;
-    use pollard_kangaroo::bl12::Bl12;
-    use pollard_kangaroo::bsgs::precomputed_tables::PrecomputedTables as BsgsTables;
-    use pollard_kangaroo::bsgs::BabyStepGiantStep;
-    use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTables;
-    use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
-    use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
-    use pollard_kangaroo::naive_lookup::NaiveLookup;
-    use pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup;
-    use pollard_kangaroo::tbsgs_k::precomputed_tables::PrecomputedTables as TbsgsKTables;
-    use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
     use pollard_kangaroo::utils;
+    use pollard_kangaroo::DiscreteLogSolver;
     use rand_chacha::ChaCha20Rng;
     use rand_core::{OsRng, RngCore, SeedableRng};
 
@@ -33,143 +23,92 @@ mod dlog_with_precomputed_tables {
         ChaCha20Rng::from_seed(seed)
     }
 
-    #[test]
-    fn bl12_solves_32_bit() {
-        let mut rng = create_seeded_rng("bl12_solves_32_bit");
-        let bl12_32 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32);
+    /// Generic test for any DiscreteLogSolver using precomputed tables.
+    fn test_solver<S: DiscreteLogSolver>(max_num_bits: u8) {
+        let mut rng = create_seeded_rng(S::algorithm_name());
+        let solver = S::from_precomputed_table(max_num_bits);
 
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
+        let (sk, pk) = utils::generate_dlog_instance_with_rng(max_num_bits, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
 
-        // Use the seeded RNG for the solver as well (BL12 is randomized)
         assert_eq!(
-            bl12_32
-                .solve_with_timeout_and_rng(&pk, None, &mut rng)
-                .unwrap(),
-            sk_u64
+            solver.solve(&pk).unwrap(),
+            sk_u64,
+            "{} failed for {}-bit secret",
+            S::algorithm_name(),
+            max_num_bits
         );
     }
 
+    // =============================================================================
+    // 32-bit solver tests
+    // =============================================================================
+
     #[test]
-    fn bsgs_solves_32_bit() {
-        let mut rng = create_seeded_rng("bsgs_solves_32_bit");
-        let bsgs32 = BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // BSGS is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
+    #[cfg(feature = "bl12_table32")]
+    fn bl12_solves_some_32_bit() {
+        test_solver::<pollard_kangaroo::bl12::Bl12>(32);
     }
 
     #[test]
-    fn bsgs_k64_solves_32_bit() {
-        let mut rng = create_seeded_rng("bsgs_k64_solves_32_bit");
-        let bsgs32 = BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BsgsK32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // BSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
+    #[cfg(feature = "bsgs_table32")]
+    fn bsgs_solves_some_32_bit() {
+        test_solver::<pollard_kangaroo::bsgs::BabyStepGiantStep>(32);
     }
 
     #[test]
-    fn bsgs_k256_solves_32_bit() {
-        let mut rng = create_seeded_rng("bsgs_k256_solves_32_bit");
-        let bsgs32 = BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BsgsK32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // BSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
+    #[cfg(feature = "bsgs_k_table32")]
+    fn bsgs_k_solves_some_32_bit() {
+        test_solver::<pollard_kangaroo::bsgs_k::BabyStepGiantStepK<64>>(32);
+        test_solver::<pollard_kangaroo::bsgs_k::BabyStepGiantStepK<256>>(32);
+        test_solver::<pollard_kangaroo::bsgs_k::BabyStepGiantStepK<1024>>(32);
     }
 
     #[test]
-    fn bsgs_k1024_solves_32_bit() {
-        let mut rng = create_seeded_rng("bsgs_k1024_solves_32_bit");
-        let bsgs32 = BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BsgsK32);
+    #[cfg(feature = "tbsgs_k_table32")]
+    fn tbsgs_k_solves_some_32_bit() {
+        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<32>>(32);
 
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
+        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<64>>(32);
+    }
 
-        // BSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(bsgs32.solve(&pk).unwrap(), sk_u64);
+    // =============================================================================
+    // 16-bit solver tests (naive lookups)
+    // =============================================================================
+
+    #[test]
+    #[cfg(feature = "bsgs_table32")]
+    fn naive_lookup_solves_some_16_bit() {
+        test_solver::<pollard_kangaroo::naive_lookup::NaiveLookup>(16);
     }
 
     #[test]
-    fn naive_doubled_lookup_solves_16_bit() {
-        let mut rng = create_seeded_rng("naive_doubled_lookup_solves_16_bit");
-        // Reuses BSGS-k 32-bit table for 16-bit lookups
-        let solver = NaiveDoubledLookup::from_precomputed_table(BsgsKTables::BsgsK32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // Naive doubled lookup is deterministic
-        assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
+    #[cfg(feature = "bsgs_k_table32")]
+    fn naive_doubled_lookup_solves_some_16_bit() {
+        test_solver::<pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup>(16);
     }
 
     #[test]
-    fn tbsgs_k32_solves_32_bit() {
-        let mut rng = create_seeded_rng("tbsgs_k32_solves_32_bit");
-        let tbsgs32 =
-            TruncatedBabyStepGiantStepK::<32>::from_precomputed_table(TbsgsKTables::TbsgsK32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // TBSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(tbsgs32.solve(&pk).unwrap(), sk_u64);
+    #[cfg(feature = "tbsgs_k_table32")]
+    fn naive_truncated_doubled_lookup_solves_some_16_bit() {
+        test_solver::<pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup>(
+            16,
+        );
     }
 
-    #[test]
-    fn tbsgs_k64_solves_32_bit() {
-        let mut rng = create_seeded_rng("tbsgs_k64_solves_32_bit");
-        let tbsgs32 =
-            TruncatedBabyStepGiantStepK::<64>::from_precomputed_table(TbsgsKTables::TbsgsK32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // TBSGS-k is deterministic, no RNG needed for solver
-        assert_eq!(tbsgs32.solve(&pk).unwrap(), sk_u64);
-    }
-
-    #[test]
-    fn naive_lookup_from_bsgs_solves_16_bit() {
-        let mut rng = create_seeded_rng("naive_lookup_from_bsgs_solves_16_bit");
-        // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
-        let solver = NaiveLookup::from_precomputed_table(BsgsTables::Bsgs32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // Naive lookup is deterministic
-        assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
-    }
-
-    #[test]
-    fn naive_truncated_doubled_lookup_solves_16_bit() {
-        let mut rng = create_seeded_rng("naive_truncated_doubled_lookup_solves_16_bit");
-        // Reuses TBSGS-k 32-bit table for 16-bit lookups
-        let solver = NaiveTruncatedDoubledLookup::from_precomputed_table(TbsgsKTables::TbsgsK32);
-
-        let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
-        let sk_u64 = utils::scalar_to_u64(&sk);
-
-        // Naive truncated doubled lookup is deterministic
-        assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
-    }
+    // =============================================================================
+    // BL12-specific test (uses randomized solver)
+    // =============================================================================
 
     #[test]
     #[ignore]
+    #[cfg(feature = "bl12_table32")]
     fn bl12_solves_all_16bits() {
         use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
         use curve25519_dalek::ristretto::RistrettoPoint;
+        use pollard_kangaroo::bl12::Bl12;
 
-        let bl12 = Bl12::from_precomputed_table(Bl12Tables::BernsteinLange32);
+        let bl12: Bl12 = DiscreteLogSolver::from_precomputed_table(32);
         let g = RISTRETTO_BASEPOINT_POINT;
 
         // Start with g^0 = identity, then increment via EC addition
@@ -182,7 +121,7 @@ mod dlog_with_precomputed_tables {
 
             let result = bl12
                 .solve(&pk)
-                .expect(&format!("BL12 failed for value {}", value));
+                .unwrap_or_else(|_| panic!("BL12 failed for value {}", value));
             assert_eq!(result, value, "BL12 returned wrong value for x={}", value);
 
             // g^(x+1) = g^x + g

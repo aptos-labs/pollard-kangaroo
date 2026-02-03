@@ -259,11 +259,46 @@ impl BabyStepGiantStepKTable {
 }
 
 impl<const K: usize> crate::DiscreteLogSolver for BabyStepGiantStepK<K> {
+    fn algorithm_name() -> &'static str {
+        // Use a const string based on K value
+        match K {
+            1 => "BSGS-k1",
+            2 => "BSGS-k2",
+            4 => "BSGS-k4",
+            8 => "BSGS-k8",
+            16 => "BSGS-k16",
+            32 => "BSGS-k32",
+            64 => "BSGS-k64",
+            128 => "BSGS-k128",
+            256 => "BSGS-k256",
+            512 => "BSGS-k512",
+            1024 => "BSGS-k1024",
+            2048 => "BSGS-k2048",
+            4096 => "BSGS-k4096",
+            8192 => "BSGS-k8192",
+            16384 => "BSGS-k16384",
+            _ => "BSGS-k?",
+        }
+    }
+
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         let table = BabyStepGiantStepKTable::generate(max_num_bits);
         Self {
             table: Arc::new(table),
         }
+    }
+
+    fn from_precomputed_table(max_num_bits: u8) -> Self {
+        #[cfg(feature = "bsgs_k_table32")]
+        if max_num_bits == 32 {
+            return BabyStepGiantStepK::from_precomputed_table(PrecomputedTables::BsgsK32);
+        }
+
+        panic!(
+            "No precomputed BSGS-k table available for {} bits. \
+             Available: 32 bits (requires 'bsgs_k_table32' feature).",
+            max_num_bits
+        );
     }
 
     fn solve(&self, pk: &RistrettoPoint) -> Result<u64> {
