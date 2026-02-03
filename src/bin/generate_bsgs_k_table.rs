@@ -22,8 +22,8 @@ fn main() -> Result<()> {
 
     let bits: u8 = args[1].parse().context("failed to parse bits argument")?;
 
-    if bits < 8 || bits > 64 {
-        anyhow::bail!("bits must be between 8 and 64");
+    if bits < 8 || bits > 32 {
+        anyhow::bail!("bits must be between 8 and 32 (u16 values require m <= 65536)");
     }
 
     // m = ceil(sqrt(2^bits)) = 2^(ceil(bits/2))
@@ -48,7 +48,9 @@ fn main() -> Result<()> {
         std::fs::create_dir_all(parent).context("failed to create output directory")?;
     }
 
-    let serialized = bincode::serialize(&table).context("failed to serialize BSGS-k table")?;
+    let serialized = table
+        .to_bytes()
+        .context("failed to serialize BSGS-k table")?;
 
     let mut file = File::create(output_path).context("failed to create output file")?;
     file.write_all(&serialized)

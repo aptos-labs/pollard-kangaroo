@@ -16,8 +16,6 @@ use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::Identity;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "serde")]
-use serde_with::serde_as;
 use std::collections::HashMap;
 use std::ops::{Add, Mul};
 use std::sync::Arc;
@@ -33,8 +31,6 @@ pub struct BabyStepGiantStep {
 }
 
 /// Defines generated table values for BSGS.
-#[cfg_attr(feature = "serde", serde_as)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct BabyStepGiantStepTable {
     /// Size of a secret to look for (in bits).
     pub max_num_bits: u8,
@@ -46,11 +42,62 @@ pub struct BabyStepGiantStepTable {
     /// Contains g^j for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^max_num_bits)).
     ///
     /// Values are u16 since j < m <= 65536 for max_num_bits <= 32.
-    #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
     pub baby_steps: HashMap<CompressedRistretto, u16>,
 
     /// Precomputed giant step: g^(-m) used to compute h * (g^(-m))^i.
     pub giant_step: RistrettoPoint,
+}
+
+/// Compact serialization format for BSGS table.
+/// Points are stored in order by discrete log (points[i] = compress(g^i)),
+/// so values are implicit and don't need to be stored.
+#[cfg(feature = "serde")]
+#[derive(Serialize, Deserialize)]
+struct BabyStepGiantStepTableSerialized {
+    max_num_bits: u8,
+    m: u64,
+    /// Points stored in order: baby_steps[j] = compress(g^j)
+    baby_steps: Vec<CompressedRistretto>,
+    giant_step: RistrettoPoint,
+}
+
+#[cfg(feature = "serde")]
+impl BabyStepGiantStepTable {
+    /// Deserialize from compact format, rebuilding the HashMap.
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, bincode::Error> {
+        let serialized: BabyStepGiantStepTableSerialized = bincode::deserialize(bytes)?;
+
+        // Rebuild HashMap with implicit indices as values
+        let mut baby_steps = HashMap::with_capacity(serialized.baby_steps.len());
+        for (j, point) in serialized.baby_steps.into_iter().enumerate() {
+            baby_steps.insert(point, j as u16);
+        }
+
+        Ok(BabyStepGiantStepTable {
+            max_num_bits: serialized.max_num_bits,
+            m: serialized.m,
+            baby_steps,
+            giant_step: serialized.giant_step,
+        })
+    }
+
+    /// Serialize to compact format (points only, no values).
+    pub fn to_bytes(&self) -> Result<Vec<u8>, bincode::Error> {
+        // Convert HashMap to sorted Vec (sorted by value = discrete log)
+        let mut points: Vec<(u16, CompressedRistretto)> =
+            self.baby_steps.iter().map(|(k, &v)| (v, *k)).collect();
+        points.sort_by_key(|(v, _)| *v);
+        let baby_steps: Vec<CompressedRistretto> = points.into_iter().map(|(_, k)| k).collect();
+
+        let serialized = BabyStepGiantStepTableSerialized {
+            max_num_bits: self.max_num_bits,
+            m: self.m,
+            baby_steps,
+            giant_step: self.giant_step,
+        };
+
+        bincode::serialize(&serialized)
+    }
 }
 
 impl BabyStepGiantStep {
@@ -65,8 +112,8 @@ impl BabyStepGiantStep {
             PrecomputedTables::Bsgs32 => precomputed_tables::BSGS_32,
         };
 
-        let table: BabyStepGiantStepTable =
-            bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
+        let table =
+            BabyStepGiantStepTable::from_bytes(bsgs_bytes).expect("precomputed table is corrupted");
         BabyStepGiantStep {
             table: Arc::new(table),
         }

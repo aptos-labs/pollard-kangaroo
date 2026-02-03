@@ -64,8 +64,8 @@ impl NaiveDoubledLookup {
             PrecomputedTables::BsgsK32 => precomputed_tables::BSGS_K_32,
         };
 
-        let bsgs_k_table: BabyStepGiantStepKTable =
-            bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
+        let bsgs_k_table = BabyStepGiantStepKTable::from_bytes(bsgs_bytes)
+            .expect("precomputed table is corrupted");
 
         NaiveDoubledLookup {
             table: Arc::new(bsgs_k_table),

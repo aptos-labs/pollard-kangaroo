@@ -52,8 +52,8 @@ impl NaiveLookup {
             precomputed_tables::PrecomputedTables::Bsgs32 => precomputed_tables::BSGS_32,
         };
 
-        let bsgs_table: BabyStepGiantStepTable =
-            bincode::deserialize(bsgs_bytes).expect("precomputed table is corrupted");
+        let bsgs_table =
+            BabyStepGiantStepTable::from_bytes(bsgs_bytes).expect("precomputed table is corrupted");
 
         NaiveLookup {
             table: Arc::new(bsgs_table),
