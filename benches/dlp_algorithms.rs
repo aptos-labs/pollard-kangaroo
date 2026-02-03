@@ -49,8 +49,7 @@ fn bench_bsgs_32bit(c: &mut Criterion) {
 
 /// Generic benchmark for BSGS-k with compile-time K and runtime secret_bits.
 fn bench_bsgs_k<const K: usize>(c: &mut Criterion, secret_bits: u8, label_suffix: &str) {
-    let bsgs =
-        BabyStepGiantStepK::<K>::from_precomputed_table(BsgsKTables::BsgsK32);
+    let bsgs = BabyStepGiantStepK::<K>::from_precomputed_table(BsgsKTables::BsgsK32);
 
     c.bench_function(&format!("[BSGS-k{}], {}", K, label_suffix), |b| {
         b.iter_batched(
@@ -107,13 +106,16 @@ fn bench_naive_lookup_from_bsgs_16bit(c: &mut Criterion) {
     // Reuses BSGS 32-bit table's baby_steps for 16-bit lookups
     let solver = NaiveLookup::from_precomputed_table(BsgsTables::Bsgs32);
 
-    c.bench_function("[Naive Lookup from BSGS] 16-bit secrets (re-using BSGS table for 32-bit DLs)", |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(16).unwrap(),
-            |(_sk, pk)| solver.solve(&pk),
-            BatchSize::SmallInput,
-        )
-    });
+    c.bench_function(
+        "[Naive Lookup from BSGS] 16-bit secrets (re-using BSGS table for 32-bit DLs)",
+        |b| {
+            b.iter_batched(
+                || utils::generate_dlog_instance(16).unwrap(),
+                |(_sk, pk)| solver.solve(&pk),
+                BatchSize::SmallInput,
+            )
+        },
+    );
 }
 
 // =============================================================================
@@ -124,13 +126,16 @@ fn bench_naive_doubled_lookup_16bit(c: &mut Criterion) {
     // Reuses BSGS-k 32-bit table for 16-bit lookups
     let solver = NaiveDoubledLookup::from_precomputed_table(BsgsKTables::BsgsK32);
 
-    c.bench_function("[Naive Doubled Lookup] 16-bit secrets (re-using BSGS-k table for 32-bit DLs)", |b| {
-        b.iter_batched(
-            || utils::generate_dlog_instance(16).unwrap(),
-            |(_sk, pk)| solver.solve(&pk),
-            BatchSize::SmallInput,
-        )
-    });
+    c.bench_function(
+        "[Naive Doubled Lookup] 16-bit secrets (re-using BSGS-k table for 32-bit DLs)",
+        |b| {
+            b.iter_batched(
+                || utils::generate_dlog_instance(16).unwrap(),
+                |(_sk, pk)| solver.solve(&pk),
+                BatchSize::SmallInput,
+            )
+        },
+    );
 }
 
 // =============================================================================

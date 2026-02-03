@@ -44,8 +44,10 @@ pub struct BabyStepGiantStepTable {
 
     /// Baby-step lookup table: maps compressed point to its discrete log (j).
     /// Contains g^j for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^max_num_bits)).
+    ///
+    /// Values are u16 since j < m <= 65536 for max_num_bits <= 32.
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
-    pub baby_steps: HashMap<CompressedRistretto, u64>,
+    pub baby_steps: HashMap<CompressedRistretto, u16>,
 
     /// Precomputed giant step: g^(-m) used to compute h * (g^(-m))^i.
     pub giant_step: RistrettoPoint,
@@ -102,7 +104,7 @@ impl BabyStepGiantStep {
 
             // Check if gamma is in the baby steps table
             if let Some(&j) = self.table.baby_steps.get(&gamma_compressed) {
-                let x = i * m + j;
+                let x = i * m + j as u64;
 
                 // Verify the result (optional but good for debugging)
                 debug_assert!({
@@ -133,8 +135,8 @@ impl BabyStepGiantStepTable {
     /// Also precompute g^(-m) for the giant step phase.
     pub fn generate(max_num_bits: u8) -> BabyStepGiantStepTable {
         assert!(
-            max_num_bits >= 1 && max_num_bits <= 64,
-            "max_num_bits must be between 1 and 64, got {}",
+            max_num_bits >= 1 && max_num_bits <= 32,
+            "max_num_bits must be between 1 and 32, got {} (u16 values require m <= 65536)",
             max_num_bits
         );
 
@@ -147,12 +149,12 @@ impl BabyStepGiantStepTable {
         let g = RISTRETTO_BASEPOINT_POINT;
 
         // g^0 = identity
-        baby_steps.insert(current.compress(), 0u64);
+        baby_steps.insert(current.compress(), 0u16);
 
         // g^1, g^2, ..., g^(m-1)
         for j in 1..m {
             current = current + g;
-            baby_steps.insert(current.compress(), j);
+            baby_steps.insert(current.compress(), j as u16);
         }
 
         // Compute g^(-m) for giant steps

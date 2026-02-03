@@ -78,8 +78,10 @@ impl NaiveLookup {
         self.table
             .baby_steps
             .get(&compressed)
-            .copied()
-            .ok_or_else(|| anyhow::anyhow!("no solution found in range [0, 2^{})", self.max_num_bits()))
+            .map(|&j| j as u64)
+            .ok_or_else(|| {
+                anyhow::anyhow!("no solution found in range [0, 2^{})", self.max_num_bits())
+            })
     }
 }
 

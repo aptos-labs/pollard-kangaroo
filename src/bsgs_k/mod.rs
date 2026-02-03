@@ -39,8 +39,9 @@ pub struct BabyStepGiantStepKTable {
     /// Contains compress(2*g^j) for j = 0, 1, ..., m-1 where m = ceil(sqrt(2^max_num_bits)).
     ///
     /// We store doubled points so we can use `double_and_compress_batch` during solving.
+    /// Values are u16 since j < m <= 65536 for max_num_bits <= 32.
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
-    pub baby_steps: HashMap<CompressedRistretto, u64>,
+    pub baby_steps: HashMap<CompressedRistretto, u16>,
 
     /// Precomputed giant step: g^(-m) used to compute h * (g^(-m))^i.
     pub giant_step: RistrettoPoint,
@@ -134,7 +135,7 @@ impl<const K: usize> BabyStepGiantStepK<K> {
             // Check each compressed point against the table
             for (i, compressed) in compressed_batch.iter().enumerate() {
                 if let Some(&j) = self.table.baby_steps.get(compressed) {
-                    let x = (batch_start + i as u64) * m + j;
+                    let x = (batch_start + i as u64) * m + j as u64;
 
                     // Verify the result (optional but good for debugging)
                     debug_assert!({
@@ -168,8 +169,8 @@ impl BabyStepGiantStepKTable {
     /// Also precompute g^(-m) for the giant step phase.
     pub fn generate(max_num_bits: u8) -> BabyStepGiantStepKTable {
         assert!(
-            max_num_bits >= 1 && max_num_bits <= 64,
-            "max_num_bits must be between 1 and 64, got {}",
+            max_num_bits >= 1 && max_num_bits <= 32,
+            "max_num_bits must be between 1 and 32, got {} (u16 values require m <= 65536)",
             max_num_bits
         );
 
@@ -192,7 +193,7 @@ impl BabyStepGiantStepKTable {
         // Build the lookup table: compressed(2*g^j) -> j
         let mut baby_steps = HashMap::with_capacity(m as usize);
         for (j, compressed) in doubled_compressed.into_iter().enumerate() {
-            baby_steps.insert(compressed, j as u64);
+            baby_steps.insert(compressed, j as u16);
         }
 
         // Compute g^(-m) for giant steps

@@ -65,10 +65,12 @@ pub struct Bl12Table {
 
     /// A vector of generated scalars which are used to get the next point and perform further
     /// distinguished point checks.
+    /// TODO: I wonder if this needs to be a scalar or if we can use a u32 or smth
     pub slog: Vec<Scalar>,
 
     /// Generated table map where key - distinguished (see [`is_distinguished`] function)
     /// Ristretto256 point and its discrete log - it's discrete log.
+    /// TODO: I wonder if this needs to be a scalar or if we can use a u32 or smth
     #[cfg_attr(feature = "serde", serde_as(as = "Vec<(_, _)>"))]
     pub distinguished_points: HashMap<CompressedRistretto, Scalar>,
 }

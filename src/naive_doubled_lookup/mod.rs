@@ -94,12 +94,9 @@ impl NaiveDoubledLookup {
         self.table
             .baby_steps
             .get(&compressed)
-            .copied()
+            .map(|&j| j as u64)
             .ok_or_else(|| {
-                anyhow::anyhow!(
-                    "no solution found in range [0, 2^{})",
-                    self.max_num_bits()
-                )
+                anyhow::anyhow!("no solution found in range [0, 2^{})", self.max_num_bits())
             })
     }
 }

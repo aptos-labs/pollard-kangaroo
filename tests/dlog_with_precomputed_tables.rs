@@ -40,7 +40,9 @@ mod dlog_with_precomputed_tables {
 
         // Use the seeded RNG for the solver as well (BL12 is randomized)
         assert_eq!(
-            bl12_32.solve_with_timeout_and_rng(&pk, None, &mut rng).unwrap(),
+            bl12_32
+                .solve_with_timeout_and_rng(&pk, None, &mut rng)
+                .unwrap(),
             sk_u64
         );
     }
@@ -48,8 +50,7 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn bsgs_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_solves_32_bit");
-        let bsgs32 =
-            BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32);
+        let bsgs32 = BabyStepGiantStep::from_precomputed_table(BsgsTables::Bsgs32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -61,8 +62,7 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn bsgs_k64_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k64_solves_32_bit");
-        let bsgs32 =
-            BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BsgsK32);
+        let bsgs32 = BabyStepGiantStepK::<64>::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -74,8 +74,7 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn bsgs_k256_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k256_solves_32_bit");
-        let bsgs32 =
-            BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BsgsK32);
+        let bsgs32 = BabyStepGiantStepK::<256>::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -87,8 +86,7 @@ mod dlog_with_precomputed_tables {
     #[test]
     fn bsgs_k1024_solves_32_bit() {
         let mut rng = create_seeded_rng("bsgs_k1024_solves_32_bit");
-        let bsgs32 =
-            BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BsgsK32);
+        let bsgs32 = BabyStepGiantStepK::<1024>::from_precomputed_table(BsgsKTables::BsgsK32);
 
         let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
         let sk_u64 = utils::scalar_to_u64(&sk);
@@ -140,7 +138,9 @@ mod dlog_with_precomputed_tables {
                 println!("Testing value {}/65535...", value);
             }
 
-            let result = bl12.solve(&pk).expect(&format!("BL12 failed for value {}", value));
+            let result = bl12
+                .solve(&pk)
+                .expect(&format!("BL12 failed for value {}", value));
             assert_eq!(result, value, "BL12 returned wrong value for x={}", value);
 
             // g^(x+1) = g^x + g
