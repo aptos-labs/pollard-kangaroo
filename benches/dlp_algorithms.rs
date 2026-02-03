@@ -9,6 +9,7 @@ use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTabl
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
 use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
 use pollard_kangaroo::naive_lookup::NaiveLookup;
+use pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup;
 use pollard_kangaroo::tbsgs_k::precomputed_tables::PrecomputedTables as TbsgsKTables;
 use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
 use pollard_kangaroo::utils;
@@ -196,6 +197,26 @@ fn bench_naive_doubled_lookup_16bit(c: &mut Criterion) {
 }
 
 // =============================================================================
+// Naive Truncated Doubled Lookup benchmarks (reuses TBSGS-k tables)
+// =============================================================================
+
+fn bench_naive_truncated_doubled_lookup_16bit(c: &mut Criterion) {
+    // Reuses TBSGS-k 32-bit table for 16-bit lookups
+    let solver = NaiveTruncatedDoubledLookup::from_precomputed_table(TbsgsKTables::TbsgsK32);
+
+    c.bench_function(
+        "[Naive Truncated Doubled Lookup] 16-bit secrets (re-using TBSGS-k table for 32-bit DLs)",
+        |b| {
+            b.iter_batched(
+                || utils::generate_dlog_instance(16).unwrap(),
+                |(_sk, pk)| solver.solve(&pk),
+                BatchSize::SmallInput,
+            )
+        },
+    );
+}
+
+// =============================================================================
 // Criterion groups
 // =============================================================================
 
@@ -247,6 +268,12 @@ criterion_group! {
     targets = bench_naive_doubled_lookup_16bit
 }
 
+criterion_group! {
+    name = naive_truncated_doubled_lookup_16bit_group;
+    config = Criterion::default().sample_size(100);
+    targets = bench_naive_truncated_doubled_lookup_16bit
+}
+
 criterion_main!(
     bl12_32bit_group,
     bsgs_32bit_group,
@@ -255,5 +282,6 @@ criterion_main!(
     tbsgs_k_32bit_group,
     tbsgs_k_17_to_24bit_group,
     naive_lookup_from_bsgs_16bit_group,
-    naive_doubled_lookup_16bit_group
+    naive_doubled_lookup_16bit_group,
+    naive_truncated_doubled_lookup_16bit_group
 );

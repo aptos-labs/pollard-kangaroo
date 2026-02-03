@@ -12,6 +12,7 @@ mod dlog_with_precomputed_tables {
     use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
     use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
     use pollard_kangaroo::naive_lookup::NaiveLookup;
+    use pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup;
     use pollard_kangaroo::tbsgs_k::precomputed_tables::PrecomputedTables as TbsgsKTables;
     use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
     use pollard_kangaroo::utils;
@@ -146,6 +147,19 @@ mod dlog_with_precomputed_tables {
         let sk_u64 = utils::scalar_to_u64(&sk);
 
         // Naive lookup is deterministic
+        assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
+    }
+
+    #[test]
+    fn naive_truncated_doubled_lookup_solves_16_bit() {
+        let mut rng = create_seeded_rng("naive_truncated_doubled_lookup_solves_16_bit");
+        // Reuses TBSGS-k 32-bit table for 16-bit lookups
+        let solver = NaiveTruncatedDoubledLookup::from_precomputed_table(TbsgsKTables::TbsgsK32);
+
+        let (sk, pk) = utils::generate_dlog_instance_with_rng(16, &mut rng).unwrap();
+        let sk_u64 = utils::scalar_to_u64(&sk);
+
+        // Naive truncated doubled lookup is deterministic
         assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
     }
 
