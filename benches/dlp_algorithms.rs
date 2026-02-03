@@ -1,8 +1,8 @@
 //! Benchmarks for discrete log algorithms.
 
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use pollard_kangaroo::utils;
-use pollard_kangaroo::DiscreteLogSolver;
+use ristretto255_dlog::utils;
+use ristretto255_dlog::DiscreteLogSolver;
 
 // =============================================================================
 // Generic benchmark function
@@ -40,7 +40,7 @@ fn bench_solver<S: DiscreteLogSolver>(c: &mut Criterion, table_bits: u8, secret_
 // =============================================================================
 
 fn bench_bl12_32bit(c: &mut Criterion) {
-    bench_solver::<pollard_kangaroo::bl12::Bl12>(c, 32, 32);
+    bench_solver::<ristretto255_dlog::bl12::Bl12>(c, 32, 32);
 }
 
 // =============================================================================
@@ -48,7 +48,7 @@ fn bench_bl12_32bit(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_bsgs_32bit(c: &mut Criterion) {
-    bench_solver::<pollard_kangaroo::bsgs::BabyStepGiantStep>(c, 32, 32);
+    bench_solver::<ristretto255_dlog::bsgs::BabyStepGiantStep>(c, 32, 32);
 }
 
 // =============================================================================
@@ -57,7 +57,7 @@ fn bench_bsgs_32bit(c: &mut Criterion) {
 
 /// Benchmarks BSGS-k for 32-bit secrets with varying K values.
 fn bench_bsgs_k_32bit(c: &mut Criterion) {
-    use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
+    use ristretto255_dlog::bsgs_k::BabyStepGiantStepK;
 
     bench_solver::<BabyStepGiantStepK<1>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<2>>(c, 32, 32);
@@ -78,7 +78,7 @@ fn bench_bsgs_k_32bit(c: &mut Criterion) {
 
 /// Benchmarks BSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
 fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
-    use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
+    use ristretto255_dlog::bsgs_k::BabyStepGiantStepK;
 
     // BSGS-k32 for 17-24 bit secrets
     bench_solver::<BabyStepGiantStepK<32>>(c, 32, 17);
@@ -103,7 +103,7 @@ fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
 
 /// Benchmarks TBSGS-k for 32-bit secrets with varying K values.
 fn bench_tbsgs_k_32bit(c: &mut Criterion) {
-    use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
+    use ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepK;
 
     bench_solver::<TruncatedBabyStepGiantStepK<1>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<2>>(c, 32, 32);
@@ -124,7 +124,7 @@ fn bench_tbsgs_k_32bit(c: &mut Criterion) {
 
 /// Benchmarks TBSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
 fn bench_tbsgs_k_17_to_24bit(c: &mut Criterion) {
-    use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
+    use ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepK;
 
     // TBSGS-k32 for 17-24 bit secrets
     bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 17);
@@ -148,15 +148,15 @@ fn bench_tbsgs_k_17_to_24bit(c: &mut Criterion) {
 // =============================================================================
 
 fn bench_naive_lookup_16bit(c: &mut Criterion) {
-    bench_solver::<pollard_kangaroo::naive_lookup::NaiveLookup>(c, 16, 16);
+    bench_solver::<ristretto255_dlog::naive_lookup::NaiveLookup>(c, 16, 16);
 }
 
 fn bench_naive_doubled_lookup_16bit(c: &mut Criterion) {
-    bench_solver::<pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup>(c, 16, 16);
+    bench_solver::<ristretto255_dlog::naive_doubled_lookup::NaiveDoubledLookup>(c, 16, 16);
 }
 
 fn bench_naive_truncated_doubled_lookup_16bit(c: &mut Criterion) {
-    bench_solver::<pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup>(
+    bench_solver::<ristretto255_dlog::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup>(
         c, 16, 16,
     );
 }

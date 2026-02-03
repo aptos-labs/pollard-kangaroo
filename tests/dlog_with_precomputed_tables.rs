@@ -4,8 +4,8 @@
 //! The seed is printed at the start of each test for reproducibility.
 
 mod dlog_with_precomputed_tables {
-    use pollard_kangaroo::utils;
-    use pollard_kangaroo::DiscreteLogSolver;
+    use ristretto255_dlog::utils;
+    use ristretto255_dlog::DiscreteLogSolver;
     use rand_chacha::ChaCha20Rng;
     use rand_core::{OsRng, RngCore, SeedableRng};
 
@@ -47,29 +47,29 @@ mod dlog_with_precomputed_tables {
     #[test]
     #[cfg(feature = "bl12_table32")]
     fn bl12_solves_some_32_bit() {
-        test_solver::<pollard_kangaroo::bl12::Bl12>(32);
+        test_solver::<ristretto255_dlog::bl12::Bl12>(32);
     }
 
     #[test]
     #[cfg(feature = "bsgs_table32")]
     fn bsgs_solves_some_32_bit() {
-        test_solver::<pollard_kangaroo::bsgs::BabyStepGiantStep>(32);
+        test_solver::<ristretto255_dlog::bsgs::BabyStepGiantStep>(32);
     }
 
     #[test]
     #[cfg(feature = "bsgs_k_table32")]
     fn bsgs_k_solves_some_32_bit() {
-        test_solver::<pollard_kangaroo::bsgs_k::BabyStepGiantStepK<64>>(32);
-        test_solver::<pollard_kangaroo::bsgs_k::BabyStepGiantStepK<256>>(32);
-        test_solver::<pollard_kangaroo::bsgs_k::BabyStepGiantStepK<1024>>(32);
+        test_solver::<ristretto255_dlog::bsgs_k::BabyStepGiantStepK<64>>(32);
+        test_solver::<ristretto255_dlog::bsgs_k::BabyStepGiantStepK<256>>(32);
+        test_solver::<ristretto255_dlog::bsgs_k::BabyStepGiantStepK<1024>>(32);
     }
 
     #[test]
     #[cfg(feature = "tbsgs_k_table32")]
     fn tbsgs_k_solves_some_32_bit() {
-        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<32>>(32);
+        test_solver::<ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepK<32>>(32);
 
-        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<64>>(32);
+        test_solver::<ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepK<64>>(32);
     }
 
     // =============================================================================
@@ -79,19 +79,19 @@ mod dlog_with_precomputed_tables {
     #[test]
     #[cfg(feature = "bsgs_table32")]
     fn naive_lookup_solves_some_16_bit() {
-        test_solver::<pollard_kangaroo::naive_lookup::NaiveLookup>(16);
+        test_solver::<ristretto255_dlog::naive_lookup::NaiveLookup>(16);
     }
 
     #[test]
     #[cfg(feature = "bsgs_k_table32")]
     fn naive_doubled_lookup_solves_some_16_bit() {
-        test_solver::<pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup>(16);
+        test_solver::<ristretto255_dlog::naive_doubled_lookup::NaiveDoubledLookup>(16);
     }
 
     #[test]
     #[cfg(feature = "tbsgs_k_table32")]
     fn naive_truncated_doubled_lookup_solves_some_16_bit() {
-        test_solver::<pollard_kangaroo::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup>(
+        test_solver::<ristretto255_dlog::naive_truncated_doubled_lookup::NaiveTruncatedDoubledLookup>(
             16,
         );
     }
@@ -106,7 +106,7 @@ mod dlog_with_precomputed_tables {
     fn bl12_solves_all_16bits() {
         use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
         use curve25519_dalek::ristretto::RistrettoPoint;
-        use pollard_kangaroo::bl12::Bl12;
+        use ristretto255_dlog::bl12::Bl12;
 
         let bl12: Bl12 = DiscreteLogSolver::from_precomputed_table(32);
         let g = RISTRETTO_BASEPOINT_POINT;

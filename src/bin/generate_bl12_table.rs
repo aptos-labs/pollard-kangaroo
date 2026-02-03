@@ -5,8 +5,8 @@
 //! Example: cargo run --bin generate_bl12_table --features "bl12,serde" -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::bl12::Bl12;
-use pollard_kangaroo::DiscreteLogSolver;
+use ristretto255_dlog::bl12::Bl12;
+use ristretto255_dlog::DiscreteLogSolver;
 use std::env;
 use std::fs::File;
 use std::io::Write;

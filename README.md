@@ -1,14 +1,14 @@
-# Discrete log algorithms
+# ristretto255-dlog
+
+Discrete log algorithms for Ristretto255 elliptic curves.
 
 This crate implements several algorithms for computing discrete logarithms on 32-bit values:
 
 - **[BL12]** - Bernstein-Lange 2012 algorithm 
 - **BSGS** - Baby-step giant-step algorithm
 - **BSGS-k** - A variant of BSGS that uses `double_and_compress_batch` for better performance
+- **TBSGS-k** - Truncated BSGS-k with 8-byte keys (75% smaller tables)
 - **Naive lookup** - Simple table lookup for small bit sizes (≤16 bits), reuses BSGS tables
-
- > [!WARNING]
- > The `pollard-kangaroo` crate name is very unfortunate, since it has almost nothing to do with the implemented algorithms: While [BL12] is a kangaroo-like algorithm, it's not actually the Pollard kangaroo algorithm.
 
 ## Precomputed tables
 

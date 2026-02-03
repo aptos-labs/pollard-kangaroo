@@ -1,5 +1,5 @@
 [package]
-name = "pollard-kangaroo"
+name = "ristretto255-dlog"
 version = "0.1.0"
 edition = "2021"
 

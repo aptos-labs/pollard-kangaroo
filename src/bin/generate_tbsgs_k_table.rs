@@ -5,7 +5,7 @@
 //! Example: cargo run --bin generate_tbsgs_k_table --features "tbsgs_k,serde" -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepKTable;
+use ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepKTable;
 use std::env;
 use std::fs::File;
 use std::io::Write;

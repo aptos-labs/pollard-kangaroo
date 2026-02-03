@@ -5,7 +5,7 @@
 //! Example: cargo run --bin generate_bsgs_table --features "bsgs,serde" -- 32
 
 use anyhow::{Context, Result};
-use pollard_kangaroo::bsgs::BabyStepGiantStepTable;
+use ristretto255_dlog::bsgs::BabyStepGiantStepTable;
 use std::env;
 use std::fs::File;
 use std::io::Write;
