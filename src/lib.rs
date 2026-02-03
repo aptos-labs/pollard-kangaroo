@@ -8,6 +8,8 @@ pub mod bsgs_k;
 pub mod naive_doubled_lookup;
 #[cfg(feature = "naive_lookup")]
 pub mod naive_lookup;
+#[cfg(feature = "tbsgs_k")]
+pub mod tbsgs_k;
 pub mod traits;
 pub mod utils;
 

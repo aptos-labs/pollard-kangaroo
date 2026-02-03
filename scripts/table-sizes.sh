@@ -36,6 +36,7 @@ tables=(
     "[BL12] 32-bit|src/bl12/rsc/table_32"
     "BSGS 32-bit|src/bsgs/rsc/table_32"
     "BSGS-k 32-bit|src/bsgs_k/rsc/table_32"
+    "TBSGS-k 32-bit|src/tbsgs_k/rsc/table_32"
 )
 
 for entry in "${tables[@]}"; do

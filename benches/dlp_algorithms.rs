@@ -9,6 +9,8 @@ use pollard_kangaroo::bsgs_k::precomputed_tables::PrecomputedTables as BsgsKTabl
 use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
 use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
 use pollard_kangaroo::naive_lookup::NaiveLookup;
+use pollard_kangaroo::tbsgs_k::precomputed_tables::PrecomputedTables as TbsgsKTables;
+use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
 use pollard_kangaroo::utils;
 
 // =============================================================================
@@ -99,6 +101,61 @@ fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
 }
 
 // =============================================================================
+// TBSGS-k benchmarks (Truncated BSGS-k with 8-byte truncated keys)
+// =============================================================================
+
+/// Generic benchmark for TBSGS-k with compile-time K and runtime secret_bits.
+fn bench_tbsgs_k<const K: usize>(c: &mut Criterion, secret_bits: u8, label_suffix: &str) {
+    let tbsgs = TruncatedBabyStepGiantStepK::<K>::from_precomputed_table(TbsgsKTables::TbsgsK32);
+
+    c.bench_function(&format!("[TBSGS-k{}], {}", K, label_suffix), |b| {
+        b.iter_batched(
+            || utils::generate_dlog_instance(secret_bits).unwrap(),
+            |(_sk, pk)| tbsgs.solve(&pk),
+            BatchSize::SmallInput,
+        )
+    });
+}
+
+/// Benchmarks TBSGS-k for 32-bit secrets with varying K values.
+fn bench_tbsgs_k_32bit(c: &mut Criterion) {
+    bench_tbsgs_k::<1>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<2>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<4>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<8>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<16>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<32>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<64>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<128>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<256>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<512>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<1024>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<2048>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<4096>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<8192>(c, 32, "32-bit secrets");
+    bench_tbsgs_k::<16384>(c, 32, "32-bit secrets");
+}
+
+/// Benchmarks TBSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
+fn bench_tbsgs_k_17_to_24bit(c: &mut Criterion) {
+    // TBSGS-k32 for 17-24 bit secrets
+    bench_tbsgs_k::<32>(c, 17, "17-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 18, "18-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 19, "19-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 20, "20-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 21, "21-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 22, "22-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 23, "23-bit secrets (32-bit table)");
+    bench_tbsgs_k::<32>(c, 24, "24-bit secrets (32-bit table)");
+
+    // Other K values for 18-bit secrets
+    bench_tbsgs_k::<64>(c, 18, "18-bit secrets (32-bit table)");
+    bench_tbsgs_k::<128>(c, 18, "18-bit secrets (32-bit table)");
+    bench_tbsgs_k::<1024>(c, 18, "18-bit secrets (32-bit table)");
+    bench_tbsgs_k::<2048>(c, 18, "18-bit secrets (32-bit table)");
+}
+
+// =============================================================================
 // Naive Lookup from BSGS table benchmarks (reuses BSGS baby_steps)
 // =============================================================================
 
@@ -167,6 +224,18 @@ criterion_group! {
 }
 
 criterion_group! {
+    name = tbsgs_k_32bit_group;
+    config = Criterion::default().sample_size(10);
+    targets = bench_tbsgs_k_32bit
+}
+
+criterion_group! {
+    name = tbsgs_k_17_to_24bit_group;
+    config = Criterion::default().sample_size(100);
+    targets = bench_tbsgs_k_17_to_24bit
+}
+
+criterion_group! {
     name = naive_lookup_from_bsgs_16bit_group;
     config = Criterion::default().sample_size(100);
     targets = bench_naive_lookup_from_bsgs_16bit
@@ -183,6 +252,8 @@ criterion_main!(
     bsgs_32bit_group,
     bsgs_k_32bit_group,
     bsgs_k_17_to_24bit_group,
+    tbsgs_k_32bit_group,
+    tbsgs_k_17_to_24bit_group,
     naive_lookup_from_bsgs_16bit_group,
     naive_doubled_lookup_16bit_group
 );

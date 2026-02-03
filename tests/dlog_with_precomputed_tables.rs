@@ -12,6 +12,8 @@ mod dlog_with_precomputed_tables {
     use pollard_kangaroo::bsgs_k::BabyStepGiantStepK;
     use pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup;
     use pollard_kangaroo::naive_lookup::NaiveLookup;
+    use pollard_kangaroo::tbsgs_k::precomputed_tables::PrecomputedTables as TbsgsKTables;
+    use pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK;
     use pollard_kangaroo::utils;
     use rand_chacha::ChaCha20Rng;
     use rand_core::{OsRng, RngCore, SeedableRng};
@@ -106,6 +108,32 @@ mod dlog_with_precomputed_tables {
 
         // Naive doubled lookup is deterministic
         assert_eq!(solver.solve(&pk).unwrap(), sk_u64);
+    }
+
+    #[test]
+    fn tbsgs_k32_solves_32_bit() {
+        let mut rng = create_seeded_rng("tbsgs_k32_solves_32_bit");
+        let tbsgs32 =
+            TruncatedBabyStepGiantStepK::<32>::from_precomputed_table(TbsgsKTables::TbsgsK32);
+
+        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
+        let sk_u64 = utils::scalar_to_u64(&sk);
+
+        // TBSGS-k is deterministic, no RNG needed for solver
+        assert_eq!(tbsgs32.solve(&pk).unwrap(), sk_u64);
+    }
+
+    #[test]
+    fn tbsgs_k64_solves_32_bit() {
+        let mut rng = create_seeded_rng("tbsgs_k64_solves_32_bit");
+        let tbsgs32 =
+            TruncatedBabyStepGiantStepK::<64>::from_precomputed_table(TbsgsKTables::TbsgsK32);
+
+        let (sk, pk) = utils::generate_dlog_instance_with_rng(32, &mut rng).unwrap();
+        let sk_u64 = utils::scalar_to_u64(&sk);
+
+        // TBSGS-k is deterministic, no RNG needed for solver
+        assert_eq!(tbsgs32.solve(&pk).unwrap(), sk_u64);
     }
 
     #[test]

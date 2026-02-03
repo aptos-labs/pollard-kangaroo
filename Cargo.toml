@@ -4,19 +4,21 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["bl12", "bsgs", "bsgs_k", "naive_lookup", "naive_doubled_lookup", "bl12_table32", "bsgs_table32", "bsgs_k_table32"]
+default = ["bl12", "bsgs", "bsgs_k", "tbsgs_k", "naive_lookup", "naive_doubled_lookup", "bl12_table32", "bsgs_table32", "bsgs_k_table32", "tbsgs_k_table32"]
 serde = ["dep:serde", "dep:serde_with"]
 precomputed_tables = ["serde", "dep:bincode"]
 # Algorithm features - can be disabled to reduce WASM size
 bl12 = []
 bsgs = []
 bsgs_k = []
+tbsgs_k = []
 naive_lookup = []
 naive_doubled_lookup = ["bsgs_k"]  # requires bsgs_k for the doubled table structure
 # Precomputed table features (each enables its algorithm + precomputed_tables)
 bl12_table32 = ["bl12", "precomputed_tables"]
 bsgs_table32 = ["bsgs", "precomputed_tables", "naive_lookup"]  # includes naive_lookup for 16-bit reuse
 bsgs_k_table32 = ["bsgs_k", "precomputed_tables", "naive_doubled_lookup"]  # includes naive_doubled_lookup for 16-bit reuse
+tbsgs_k_table32 = ["tbsgs_k", "precomputed_tables"]
 
 [dependencies]
 # Minimize curve25519-dalek size: disable default features, enable only what we need
@@ -47,6 +49,10 @@ required-features = ["bsgs", "serde"]
 [[bin]]
 name = "generate_bsgs_k_table"
 required-features = ["bsgs_k", "serde"]
+
+[[bin]]
+name = "generate_tbsgs_k_table"
+required-features = ["tbsgs_k", "serde"]
 
 [[bench]]
 name = "dlp_algorithms"

@@ -68,4 +68,13 @@ mod dlog_without_precomputation {
         // NaiveDoubledLookup uses a table for 2*max_num_bits, so 10-bit test uses 20-bit table
         test_solver::<pollard_kangaroo::naive_doubled_lookup::NaiveDoubledLookup>(10);
     }
+
+    #[test]
+    #[cfg(feature = "tbsgs_k")]
+    fn test_tbsgs_k_all_values_up_to_10bits() {
+        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<32>>(10);
+        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<64>>(10);
+        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<256>>(10);
+        test_solver::<pollard_kangaroo::tbsgs_k::TruncatedBabyStepGiantStepK<1024>>(10);
+    }
 }
