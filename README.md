@@ -18,10 +18,12 @@ Precomputed tables for 32-bit discrete logs are **checked into the repository**:
 - `src/bsgs_k/rsc/table_32` (~2.5 MiB)
 - `src/bl12/rsc/table_32` (~256 KiB)
 
-To regenerate the tables (not normally needed):
+To regenerate the tables (not normally needed), use the provided scripts:
 
 ```bash
-./scripts/regenerate_dl_tables.sh
+./scripts/regenerate_bl12_table.sh
+./scripts/regenerate_bsgs_tables.sh
+./scripts/regenerate_tbsgs_k_table.sh
 ```
 
 ## Useful references
