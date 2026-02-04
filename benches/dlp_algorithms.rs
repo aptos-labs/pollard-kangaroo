@@ -59,16 +59,20 @@ fn bench_bsgs_32bit(c: &mut Criterion) {
 fn bench_bsgs_k_32bit(c: &mut Criterion) {
     use ristretto255_dlog::bsgs_k::BabyStepGiantStepK;
 
+    bench_solver::<BabyStepGiantStepK<1>>(c, 32, 16);
     bench_solver::<BabyStepGiantStepK<1>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<2>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<4>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<8>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<16>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 16);
     bench_solver::<BabyStepGiantStepK<32>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<64>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<128>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<256>>(c, 32, 16);
     bench_solver::<BabyStepGiantStepK<256>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<512>>(c, 32, 32);
+    bench_solver::<BabyStepGiantStepK<1024>>(c, 32, 16);
     bench_solver::<BabyStepGiantStepK<1024>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<2048>>(c, 32, 32);
     bench_solver::<BabyStepGiantStepK<4096>>(c, 32, 32);
@@ -76,11 +80,12 @@ fn bench_bsgs_k_32bit(c: &mut Criterion) {
     bench_solver::<BabyStepGiantStepK<16384>>(c, 32, 32);
 }
 
-/// Benchmarks BSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
-fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
+/// Benchmarks BSGS-k for 16-24 bit secrets (using 32-bit table) with varying K values.
+fn bench_bsgs_k_16_to_24bit(c: &mut Criterion) {
     use ristretto255_dlog::bsgs_k::BabyStepGiantStepK;
 
-    // BSGS-k32 for 17-24 bit secrets
+    // BSGS-k32 for 16-24 bit secrets
+    bench_solver::<BabyStepGiantStepK<32>>(c, 32, 16);
     bench_solver::<BabyStepGiantStepK<32>>(c, 32, 17);
     bench_solver::<BabyStepGiantStepK<32>>(c, 32, 18);
     bench_solver::<BabyStepGiantStepK<32>>(c, 32, 19);
@@ -105,16 +110,20 @@ fn bench_bsgs_k_17_to_24bit(c: &mut Criterion) {
 fn bench_tbsgs_k_32bit(c: &mut Criterion) {
     use ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepK;
 
+    bench_solver::<TruncatedBabyStepGiantStepK<1>>(c, 32, 16);
     bench_solver::<TruncatedBabyStepGiantStepK<1>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<2>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<4>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<8>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<16>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 16);
     bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<64>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<128>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<256>>(c, 32, 16);
     bench_solver::<TruncatedBabyStepGiantStepK<256>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<512>>(c, 32, 32);
+    bench_solver::<TruncatedBabyStepGiantStepK<1024>>(c, 32, 16);
     bench_solver::<TruncatedBabyStepGiantStepK<1024>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<2048>>(c, 32, 32);
     bench_solver::<TruncatedBabyStepGiantStepK<4096>>(c, 32, 32);
@@ -122,11 +131,12 @@ fn bench_tbsgs_k_32bit(c: &mut Criterion) {
     bench_solver::<TruncatedBabyStepGiantStepK<16384>>(c, 32, 32);
 }
 
-/// Benchmarks TBSGS-k for 17-24 bit secrets (using 32-bit table) with varying K values.
-fn bench_tbsgs_k_17_to_24bit(c: &mut Criterion) {
+/// Benchmarks TBSGS-k for 16-24 bit secrets (using 32-bit table) with varying K values.
+fn bench_tbsgs_k_16_to_24bit(c: &mut Criterion) {
     use ristretto255_dlog::tbsgs_k::TruncatedBabyStepGiantStepK;
 
-    // TBSGS-k32 for 17-24 bit secrets
+    // TBSGS-k32 for 16-24 bit secrets
+    bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 16);
     bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 17);
     bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 18);
     bench_solver::<TruncatedBabyStepGiantStepK<32>>(c, 32, 19);
@@ -184,9 +194,9 @@ criterion_group! {
 }
 
 criterion_group! {
-    name = bsgs_k_17_to_24bit_group;
+    name = bsgs_k_16_to_24bit_group;
     config = Criterion::default().sample_size(100);
-    targets = bench_bsgs_k_17_to_24bit
+    targets = bench_bsgs_k_16_to_24bit
 }
 
 criterion_group! {
@@ -196,9 +206,9 @@ criterion_group! {
 }
 
 criterion_group! {
-    name = tbsgs_k_17_to_24bit_group;
+    name = tbsgs_k_16_to_24bit_group;
     config = Criterion::default().sample_size(100);
-    targets = bench_tbsgs_k_17_to_24bit
+    targets = bench_tbsgs_k_16_to_24bit
 }
 
 criterion_group! {
@@ -223,9 +233,9 @@ criterion_main!(
     bl12_32bit_group,
     bsgs_32bit_group,
     bsgs_k_32bit_group,
-    bsgs_k_17_to_24bit_group,
+    bsgs_k_16_to_24bit_group,
     tbsgs_k_32bit_group,
-    tbsgs_k_17_to_24bit_group,
+    tbsgs_k_16_to_24bit_group,
     naive_lookup_16bit_group,
     naive_doubled_lookup_16bit_group,
     naive_truncated_doubled_lookup_16bit_group
