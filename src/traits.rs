@@ -37,7 +37,8 @@ pub trait DiscreteLogSolver: Sized {
     /// Panics if no precomputed table is available for the given bit size.
     fn from_precomputed_table(max_num_bits: u8) -> Self;
 
-    /// Solves the discrete logarithm problem.
+    /// Tries to best-effor solve the discrete logarithm problem. It may get 
+    /// stuck in an infinite loop for some DL algorithms.
     ///
     /// Given `pk = g^x` where `g` is the Ristretto basepoint, finds `x`.
     ///
