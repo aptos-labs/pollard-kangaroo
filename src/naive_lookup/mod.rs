@@ -92,7 +92,7 @@ impl crate::DiscreteLogSolver for NaiveLookup {
 
     fn new_and_compute_table(max_num_bits: u8) -> Self {
         // Generate a BSGS table for 2*max_num_bits to get max_num_bits baby steps
-        let table = BabyStepGiantStepTable::generate(max_num_bits * 2);
+        let table = BabyStepGiantStepTable::generate(max_num_bits.checked_mul(2).expect("max_num_bits overflow"));
         NaiveLookup {
             table: Arc::new(table),
         }
