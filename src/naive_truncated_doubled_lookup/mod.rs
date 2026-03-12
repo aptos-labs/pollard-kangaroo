@@ -16,6 +16,7 @@
 //! - Solve time: O(1) (single doubling + compression + truncation + hash lookup + verification)
 
 use crate::tbsgs_k::TruncatedBabyStepGiantStepKTable;
+use crate::utils::truncate_key;
 use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
 use curve25519_dalek::ristretto::RistrettoPoint;
@@ -25,15 +26,6 @@ use std::sync::Arc;
 
 #[cfg(feature = "tbsgs_k_table32")]
 use crate::tbsgs_k::precomputed_tables::PrecomputedTables;
-
-/// Extracts the first 8 bytes of a CompressedRistretto as a u64.
-#[inline]
-fn truncate_key(compressed: &curve25519_dalek::ristretto::CompressedRistretto) -> u64 {
-    let bytes = compressed.as_bytes();
-    u64::from_le_bytes([
-        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-    ])
-}
 
 /// Naive truncated doubled lookup solver that reuses TBSGS-k tables for O(1) lookups.
 ///

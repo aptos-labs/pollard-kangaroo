@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use core::ops::Mul;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek::ristretto::RistrettoPoint;
+use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
 use curve25519_dalek::scalar::Scalar;
 use rand_core::{OsRng, RngCore};
 
@@ -40,6 +40,15 @@ pub fn scalar_to_u64(scalar: &Scalar) -> u64 {
 /// Converts a u64 to a scalar.
 pub fn u64_to_scalar(value: u64) -> Scalar {
     Scalar::from(value)
+}
+
+/// Extracts the first 8 bytes of a CompressedRistretto as a u64.
+#[inline]
+pub(crate) fn truncate_key(compressed: &CompressedRistretto) -> u64 {
+    let bytes = compressed.as_bytes();
+    u64::from_le_bytes([
+        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+    ])
 }
 
 /// Generates a random discrete log instance using the provided RNG: a scalar x and the point g^x.

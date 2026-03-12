@@ -18,9 +18,10 @@ pub mod precomputed_tables;
 #[cfg(feature = "tbsgs_k_table32")]
 use crate::tbsgs_k::precomputed_tables::PrecomputedTables;
 
+use crate::utils::truncate_key;
 use anyhow::Result;
 use curve25519_dalek::constants::RISTRETTO_BASEPOINT_POINT;
-use curve25519_dalek::ristretto::{CompressedRistretto, RistrettoPoint};
+use curve25519_dalek::ristretto::RistrettoPoint;
 use curve25519_dalek::scalar::Scalar;
 use curve25519_dalek::traits::Identity;
 #[cfg(feature = "serde")]
@@ -28,15 +29,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ops::{Add, Mul};
 use std::sync::Arc;
-
-/// Extracts the first 8 bytes of a CompressedRistretto as a u64.
-#[inline]
-fn truncate_key(compressed: &CompressedRistretto) -> u64 {
-    let bytes = compressed.as_bytes();
-    u64::from_le_bytes([
-        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-    ])
-}
 
 /// Defines generated table values for TBSGS-k.
 pub struct TruncatedBabyStepGiantStepKTable {
